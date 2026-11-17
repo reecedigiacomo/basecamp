@@ -72,4 +72,5 @@ The test is what someone would do wrong because of the problem, and what it woul
 ## Reporting
 
 - **Return your findings to the session,** structured as above. Don't post to the PR. Include your threat model. List nits separately from real findings.
+- **Write each finding** per `~/.claude/basecamp/practices.md`'s Writing section, but keep its Evidence in full, as above: Adjudicate reproduces it, so Writing's one evidence link doesn't apply.
 - **Report, never fix.** Don't edit code or push commits.

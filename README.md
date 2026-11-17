@@ -55,7 +55,7 @@ It asks for the project's name, a one-line description, its language (Python or 
 
 | Path | What it is |
 |---|---|
-| [`practices.md`](practices.md) | The rules every project follows: commits, branches, local checks, PR format, shortcuts, comments and names, and the Agent Brief layout. Written as instructions for agents. |
+| [`practices.md`](practices.md) | The rules every project follows: commits, branches, local checks, writing, PR format, shortcuts, comments and names, and the Agent Brief layout. Written as instructions for agents. |
 | [`skills/`](skills/) | The loop's Claude Code skills: `/agent-brief`, `/implementation-loop`, `/pr-review`, plus the vendored `/grill-me`. |
 | [`docs/`](docs/) | Why things are the way they are: the loop, the practices, and what gets recorded for retrospectives. |
 | [`install`](install) | Sets up a machine: links the skills and practices, checks for tools. |

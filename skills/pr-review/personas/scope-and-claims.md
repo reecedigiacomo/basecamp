@@ -46,7 +46,7 @@ Each dimension is a principle. The examples are not a complete list.
 
 ### Documentation
 
-**What you're checking:** Everything written that describes the code. Examples: the PR description, comments and docstrings, docs changed in the PR, and stale docs elsewhere that the PR should have updated.
+**What you're checking:** Everything written that describes the code. Examples: the PR description, comments and docstrings, docs changed in the PR, stale docs elsewhere that the PR should have updated, and **padding**: a PR description or post that breaks `~/.claude/basecamp/practices.md`'s Writing section (holding sentences its deletion test would cut, or, if an agent wrote it, unsigned).
 
 **How:**
 - **Testing section, both directions:** the status line matches CI, every listed test change is real, and every test change in the diff is listed.
@@ -64,6 +64,7 @@ Each dimension is a principle. The examples are not a complete list.
 | minor | Missing docs the brief asked for: nobody acts on false information, so it's a requirement not met, flagged by Scope against the contract | |
 | minor | A wrong comment or docstring that the code beside it plainly contradicts (major if callers rely on it, like a public docstring) | Docstring says "returns None," but the function raises |
 | minor | Missing docs (default) | A new `--strict` flag with no mention anywhere |
+| minor | Padding | Implementation notes that walk through the diff file by file |
 | nit | Wording | Typos, or an awkward but accurate sentence |
 
 ## Shortcuts
@@ -94,4 +95,5 @@ The test is what someone would do wrong because of the problem, and what it woul
 ## Reporting
 
 - **Return your findings to the session,** structured as above. Don't post to the PR. Include your contract checklist and your **not checked** list. List nits separately from real findings.
+- **Write each finding** per `~/.claude/basecamp/practices.md`'s Writing section, but keep its Evidence in full, as above: Adjudicate reproduces it, so Writing's one evidence link doesn't apply.
 - **Report, never fix.** Don't edit code or push commits.
