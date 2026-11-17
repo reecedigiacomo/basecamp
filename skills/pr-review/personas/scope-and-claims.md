@@ -46,7 +46,7 @@ Each dimension is a principle. The examples are not a complete list.
 
 ### Documentation
 
-**What you're checking:** Everything written that describes the code. Examples: the PR description, comments and docstrings, docs changed in the PR, stale docs elsewhere that the PR should have updated, and **padding**: a PR description or agent post that breaks `~/.claude/basecamp/practices.md`'s Writing section (unsigned, or holding sentences its deletion test would cut).
+**What you're checking:** Everything written that describes the code. Examples: the PR description, comments and docstrings, docs changed in the PR, stale docs elsewhere that the PR should have updated, and **padding**: a PR description or post that breaks `~/.claude/basecamp/practices.md`'s Writing section (holding sentences its deletion test would cut, or, if an agent wrote it, unsigned).
 
 **How:**
 - **Testing section, both directions:** the status line matches CI, every listed test change is real, and every test change in the diff is listed.

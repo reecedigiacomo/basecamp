@@ -24,7 +24,7 @@ You are the conductor for brief #<issue>. You start each stage in a fresh, named
    - **No PR:** next is implement, round 1.
    - **A trusted Human Brief is posted:** the loop is finished. Report and stop.
    - **An open Human Decision with no answer yet:** stop and tell the human what's waiting. Answers are recorded where step 7 (Route) of the pr-review skill's `SKILL.md` (in the `pr-review` folder next to this skill's folder) says, and only the ones it says count are answers: look for them there.
-   - **Commits newer than the latest `PR Review · round <n>`,** or no review yet: next is review, same round.
+   - **Commits newer than the latest review summary** (the `PR Review · round <n>` post that holds a rulings table), or no review yet: next is review, same round.
    - **The latest review accepted findings, or a Human Decision was answered:** next is implement, round n+1.
 
 2. **Prepare the worktree.** Make sure `.claude/worktrees/<issue#>` exists on branch `brief/<issue#>-<slug>`, created from `main` if it doesn't. Every stage session runs there.

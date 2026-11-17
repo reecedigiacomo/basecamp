@@ -72,4 +72,5 @@ The test is what someone would do wrong because of the problem, and what it woul
 ## Reporting
 
 - **Return your findings to the session,** structured as above. Don't post to the PR. Include your threat model. List nits separately from real findings.
+- **Write each finding** per `~/.claude/basecamp/practices.md`'s Writing section.
 - **Report, never fix.** Don't edit code or push commits.
