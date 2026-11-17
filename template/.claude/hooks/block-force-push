@@ -129,15 +129,51 @@ check_segment() {
 # Split the command into simple commands. Line continuations are joined and
 # quotes and backslashes dropped. `$` stays in its word so check_push sees the
 # expansion; a backtick becomes `$` too, then both it and `(` end the segment.
+# An unquoted redirection (`2>&1`, `> log`) is dropped with its target, since it
+# never reaches git's arguments; a target holding a command substitution is kept
+# so the command inside is checked.
 set -f # no glob expansion when splitting words
 segments=$(printf '%s\n' "$cmd" | awk '
+  function put(c) {
+    if (c == "`") out = out "$\n"
+    else if (c ~ /[;&|()]/) out = out "\n"
+    else out = out c
+  }
+  # redirect(i): line[i] starts a redirection; returns the index of its last character.
+  function redirect(i,   start, q, c) {
+    # An all-digit word right before the operator is its file descriptor.
+    if (match(out, /[0-9]+$/) && (RSTART == 1 || substr(out, RSTART - 1, 1) ~ /[ \t\n]/))
+      out = substr(out, 1, RSTART - 1)
+    while (substr(line, i + 1, 1) ~ /[<>&]/) i++
+    while (substr(line, i + 1, 1) ~ /[ \t]/) i++
+    start = i; q = ""
+    while (i < n) {
+      c = substr(line, i + 1, 1)
+      if (q != "") { if (c == q) q = "" }
+      else if (c == "\"" || c == "\047") q = c
+      else if (c ~ /[ \t;&|()<>]/) break
+      i++
+    }
+    out = out " "
+    if (substr(line, start + 1, i - start) ~ /`|\$\(/) return start
+    return i
+  }
   /\\$/ { sub(/\\$/, ""); joined = joined $0; next }
   {
-    line = joined $0; joined = ""
-    gsub(/["\047\\]/, "", line)
-    gsub(/`/, "$\n", line)
-    gsub(/[;&|()]/, "\n", line)
-    print line
+    line = joined $0; joined = ""; out = ""; quote = ""; n = length(line)
+    for (i = 1; i <= n; i++) {
+      c = substr(line, i, 1)
+      if (quote != "") {
+        if (c == quote) quote = ""
+        else if (c == "\\" && quote == "\"") put(substr(line, ++i, 1))
+        else put(c)
+      }
+      else if (c == "\"" || c == "\047") quote = c
+      else if (c == "\\") put(substr(line, ++i, 1))
+      else if (c == ">" || c == "<") i = redirect(i)
+      else put(c)
+    }
+    print out
   }
   END { if (joined != "") print joined }
 ')
