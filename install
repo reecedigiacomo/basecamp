@@ -7,19 +7,21 @@
 set -euo pipefail
 
 physical() {  # physical <path>: the real path with every link resolved, or empty if it doesn't exist
-  local p="$1" target hops=0
+  # Every step uses cd -P, so ".." inside a link target is resolved physically, not textually.
+  local p="$1" target dir hops=0
   while [ -L "$p" ] && [ "$hops" -lt 40 ]; do
     target="$(readlink "$p")"
     case "$target" in
       /*) p="$target" ;;
-      *) p="$(dirname "$p")/$target" ;;
+      *) dir="$(cd -P "$(dirname "$p")" 2>/dev/null && pwd -P)" || return 0
+         p="$dir/$target" ;;
     esac
     hops=$((hops + 1))
   done
   if [ -d "$p" ]; then
-    (cd "$p" && pwd -P)
+    (cd -P "$p" && pwd -P)
   elif [ -e "$p" ]; then
-    echo "$(cd "$(dirname "$p")" && pwd -P)/$(basename "$p")"
+    dir="$(cd -P "$(dirname "$p")" && pwd -P)" && echo "$dir/$(basename "$p")"
   fi
 }
 
@@ -48,14 +50,15 @@ Skills: agent-brief, implementation-loop, pr-review, grill-me, grilling
 Tools:  copier, just, rustup, gh
 
 practices.md is always linked at ~/.claude/basecamp/practices.md: the BaseCamp skills read it.
-The links point into this clone, so keep it where it is. After moving it, rerun ./install.
+The links point into this clone, so keep it where it is. After moving it, rerun ./install:
+broken links are repaired by default.
 EOF
 }
 
 name_list() {  # name_list <flag> <value>: the comma-separated list with all spacing removed
   local list
-  list="$(printf '%s' "$2" | tr -d '[:space:]')"
-  if [ -z "$list" ]; then echo "$1 needs a value" >&2; exit 2; fi
+  list="$(printf '%s' "$2" | tr -d '[:space:]' | tr -s ',' | sed 's/^,//; s/,$//')"
+  if [ -z "$list" ]; then echo "$1 needs at least one name, or none" >&2; exit 2; fi
   echo "$list"
 }
 
@@ -103,7 +106,7 @@ tool_install_cmd() {
   case "$1" in
     copier) echo "uv tool install copier" ;;
     just) echo "brew install just" ;;
-    rustup) echo 'brew install rustup && "$(brew --prefix rustup)/bin/rustup" default stable' ;;
+    rustup) echo 'brew install rustup && "$(brew --prefix)/opt/rustup/bin/rustup" default stable' ;;
     gh) echo "brew install gh" ;;
   esac
 }
@@ -116,11 +119,27 @@ keg_rustup() {  # Homebrew's rustup is keg-only, so it's off PATH. Prints its pa
   if [ -x "$p" ]; then echo "$p"; fi
 }
 
-tool_state() {  # tool_state <tool>: installed, keg (rustup installed off PATH), or missing
-  if command -v "$1" >/dev/null 2>&1; then
+rustup_bin() {  # the rustup to use: the one on PATH, else Homebrew's keg-only one
+  command -v rustup 2>/dev/null || keg_rustup
+}
+
+rustup_path_line() {  # the one PATH line to suggest for Homebrew's rustup
+  echo "export PATH=\"$(dirname "$(keg_rustup)"):\$PATH\""
+}
+
+# installed, keg (rustup installed off PATH), no-toolchain (rustup without a toolchain), or missing
+tool_state() {
+  local bin
+  if [ "$1" = rustup ] && bin="$(rustup_bin)" && [ -n "$bin" ]; then
+    if "$bin" toolchain list 2>/dev/null | grep -q 'no installed toolchains'; then
+      echo no-toolchain
+    elif command -v rustup >/dev/null 2>&1; then
+      echo installed
+    else
+      echo keg
+    fi
+  elif command -v "$1" >/dev/null 2>&1; then
     echo installed
-  elif [ "$1" = rustup ] && [ -n "$(keg_rustup)" ]; then
-    echo keg
   else
     echo missing
   fi
@@ -146,15 +165,20 @@ inside_repo() {  # inside_repo <path>: true if <path> resolves into this repo, o
   esac
 }
 
-# ok: already resolves to the source. missing: nothing there. other-link: a link to somewhere else.
+# ok: already resolves to the source. missing: nothing there. broken: a link to something that no
+# longer exists (for example, after the clone moved). other-link: a link to somewhere else.
 # exists: a real file or folder in the way. in-repo: its folder resolves into this repo, so it's
-# never linked or replaced.
+# never linked or replaced. dead-folder: its folder is a link to nothing, so nothing can go there.
 link_state() {
   local dest="$1" src="$2"
   if [ -e "$dest" ] && [ "$(physical "$dest")" = "$(physical "$src")" ]; then
     echo ok
+  elif [ -L "$(dirname "$dest")" ] && [ ! -e "$(dirname "$dest")" ]; then
+    echo dead-folder
   elif inside_repo "$(dirname "$dest")"; then
     echo in-repo
+  elif [ -L "$dest" ] && [ ! -e "$dest" ]; then
+    echo broken
   elif [ -L "$dest" ]; then
     echo other-link
   elif [ -e "$dest" ]; then
@@ -181,6 +205,8 @@ describe() {  # describe <state> <dest>
   case "$1" in
     ok) echo "linked" ;;
     missing) echo "not linked" ;;
+    broken) echo "broken link ($(readlink "$2") is gone): will repair" ;;
+    dead-folder) echo "can't link: $(dirname "$2") is a link to $(readlink "$(dirname "$2")"), which is gone" ;;
     other-link) echo "links elsewhere ($(readlink "$2")): needs your OK to replace" ;;
     exists) echo "a real file or folder is in the way: needs your OK to replace" ;;
     in-repo) echo "can't link: its folder resolves into this repo" ;;
@@ -188,7 +214,7 @@ describe() {  # describe <state> <dest>
 }
 
 backup_and_link() {  # backup_and_link <src> <dest>
-  local src="$1" dest="$2" real
+  local src="$1" dest="$2"
   if inside_repo "$(dirname "$dest")"; then
     echo "  refusing to link $dest: its folder resolves into this repo."
     return 0
@@ -197,16 +223,20 @@ backup_and_link() {  # backup_and_link <src> <dest>
     echo "  can't link $dest: $src doesn't exist."
     return 0
   fi
-  mkdir -p "$(dirname "$dest")"
+  if ! mkdir -p "$(dirname "$dest")" 2>/dev/null; then
+    echo "  can't link $dest: couldn't create $(dirname "$dest")."
+    return 0
+  fi
   if [ -e "$dest" ] || [ -L "$dest" ]; then
-    real="$(physical "$dest")"
-    case "$real/" in
-      "$REPO"/*)
-        echo "  refusing to move $dest: it resolves into this repo ($real)."
-        return 0
-        ;;
-    esac
-    mkdir -p "$BACKUP_DIR"
+    # Only the link or folder at $dest moves, never what a link points to.
+    if inside_repo "$BACKUP_DIR"; then
+      echo "  refusing to replace $dest: the backup folder $BACKUP_DIR resolves into this repo."
+      return 0
+    fi
+    if ! mkdir -p "$BACKUP_DIR" 2>/dev/null; then
+      echo "  can't replace $dest: couldn't create $BACKUP_DIR."
+      return 0
+    fi
     local saved
     saved="$BACKUP_DIR/$(basename "$dest").$(date +%Y%m%d-%H%M%S)"
     mv "$dest" "$saved"
@@ -236,7 +266,8 @@ echo "Tools:"
 for t in $ALL_TOOLS; do
   case "$(tool_state "$t")" in
     installed) printf '  %-22s %s\n' "$t" "installed" ;;
-    keg) printf '  %-22s %s\n' "$t" "installed, not on your PATH: add export PATH=\"$(dirname "$(keg_rustup)"):\$PATH\"" ;;
+    keg) printf '  %-22s %s\n' "$t" "installed, not on your PATH: add $(rustup_path_line)" ;;
+    no-toolchain) printf '  %-22s %s\n' "$t" "installed, no toolchain yet: $(rustup_bin) default stable" ;;
     missing) printf '  %-22s %s\n' "$t" "missing: $(tool_install_cmd "$t")" ;;
   esac
 done
@@ -251,8 +282,13 @@ fi
 
 # Practices: always linked. Ask only if something is in the way.
 case "$PRACTICES_STATE" in
-  ok|in-repo) ;;
+  ok|in-repo|dead-folder) ;;
   missing) backup_and_link "$PRACTICES_SRC" "$PRACTICES_DEST" ;;
+  broken)
+    if ask "practices.md: $(describe "$PRACTICES_STATE" "$PRACTICES_DEST"). Repair it?" y; then
+      backup_and_link "$PRACTICES_SRC" "$PRACTICES_DEST"
+    fi
+    ;;
   *)
     if ask "practices.md: $(describe "$PRACTICES_STATE" "$PRACTICES_DEST"). Replace it?" n; then
       backup_and_link "$PRACTICES_SRC" "$PRACTICES_DEST"
@@ -266,7 +302,7 @@ esac
 CHOSEN=""
 for s in $ALL_SKILLS; do
   state="$(link_state "$SKILLS_DIR/$s" "$(skill_src "$s")")"
-  case "$state" in ok|in-repo) continue ;; esac
+  case "$state" in ok|in-repo|dead-folder) continue ;; esac
   if [ "$SKILLS_SEL" = none ]; then continue; fi
   if [ -n "$SKILLS_SEL" ]; then
     in_list "$s" "$SKILLS_SEL" || continue
@@ -281,7 +317,7 @@ done
 for s in $CHOSEN; do
   for need in $(skill_needs "$s"); do
     case " $CHOSEN " in *" $need "*) continue ;; esac
-    case "$(link_state "$SKILLS_DIR/$need" "$(skill_src "$need")")" in ok|in-repo) continue ;; esac
+    case "$(link_state "$SKILLS_DIR/$need" "$(skill_src "$need")")" in ok|in-repo|dead-folder) continue ;; esac
     if ask "$s needs $need. Link $need too?" y; then
       CHOSEN="$CHOSEN $need"
     fi
@@ -295,6 +331,13 @@ for s in $CHOSEN; do
   case "$state" in
     ok) ;;
     missing) backup_and_link "$src" "$dest" ;;
+    broken)
+      if ask "$s: $(describe "$state" "$dest"). Repair it?" y; then
+        backup_and_link "$src" "$dest"
+      else
+        echo "  left $s as is."
+      fi
+      ;;
     *)
       if ask "$s: $(describe "$state" "$dest"). Replace it?" n; then
         backup_and_link "$src" "$dest"
@@ -318,9 +361,16 @@ done
 # Tools: ask before installing each missing one. Never run anything piped from the internet.
 # A failed install is reported, and the rest of the run carries on.
 for t in $ALL_TOOLS; do
-  [ "$(tool_state "$t")" = missing ] || continue
+  state="$(tool_state "$t")"
+  case "$state" in missing|no-toolchain) ;; *) continue ;; esac
   if [ "$TOOLS_SEL" = none ]; then continue; fi
   if [ -n "$TOOLS_SEL" ] && ! in_list "$t" "$TOOLS_SEL"; then continue; fi
+  if [ "$state" = no-toolchain ]; then
+    if ask "Set up rustup's stable toolchain with: $(rustup_bin) default stable?" n; then
+      "$(rustup_bin)" default stable || echo "  rustup: toolchain setup failed. Run it yourself: $(rustup_bin) default stable"
+    fi
+    continue
+  fi
   cmd="$(tool_install_cmd "$t")"
   needs="$(tool_needs "$t")"
   if [ "$(uname)" != Darwin ] || ! command -v "$needs" >/dev/null 2>&1; then
@@ -331,7 +381,7 @@ for t in $ALL_TOOLS; do
     if sh -c "$cmd"; then
       if [ "$t" = rustup ]; then
         echo "  rustup is installed but not on your PATH (Homebrew keeps it separate)."
-        echo "  Add this to your shell profile: export PATH=\"\$(brew --prefix rustup)/bin:\$PATH\""
+        echo "  Add this to your shell profile: $(rustup_path_line)"
       fi
     else
       echo "  $t: install failed. Run it yourself: $cmd"
