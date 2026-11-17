@@ -43,7 +43,7 @@ Each dimension is a principle with a few examples, not a fixed checklist. Use ju
   - **high:** reaches outside the project, or across most of it: a public interface, a data or storage format, configuration, security, or a dependency upgrade
 
 **Severity:** On the scale below, by what breaks, and how far away. Examples:
-- breaks normal use of something that depends on the code: blocker; breaks it only in an edge case: major
+- breaks normal use of something that depends on the code: blocker; breaks it in a realistic edge case: major; in a rare one: minor
 - a one-way door rated as two-way: blocker, since it hides an irreversible decision that's the human's
 - a blast radius understated, with the door right: minor, since the door is what says whether merging can be undone
 

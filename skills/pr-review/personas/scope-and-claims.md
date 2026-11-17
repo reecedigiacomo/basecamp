@@ -41,7 +41,7 @@ Each dimension is a principle. The examples are not a complete list.
 
 **Severity:** On the scale below, by what a reader who trusts the false claim would get wrong. Examples:
 - a false claim that hides a missing or broken required behavior: blocker
-- any other false claim a reader will rely on: major
+- any other false claim a reader will act on in a way that costs them: major; one that's cheap to notice or cheap to act on wrongly: minor
 - a claim that can't be checked, with no evidence and no way to test it: minor, asking for evidence
 
 ### Documentation
@@ -58,10 +58,10 @@ Each dimension is a principle. The examples are not a complete list.
 | Severity | Example case | Example |
 |---|---|---|
 | blocker | The Testing section hides a failure or an unexplained skip | Says "All 48 pass," but CI shows a failure |
-| minor | The Testing section is otherwise inaccurate, hiding nothing | A renamed test listed as added |
 | major | The PR misdescribes the change | The diagram marks `Parser` unchanged, but its interface changed |
-| major | Stale docs elsewhere | README still says blank lines raise an error |
-| major | Missing docs the brief asked for: a required deliverable, though merging without it breaks nothing | |
+| major | Stale docs elsewhere that users will follow (minor if only maintainers read them and the code plainly says otherwise) | README still says blank lines raise an error |
+| minor | The Testing section is otherwise inaccurate, hiding nothing | A renamed test listed as added |
+| minor | Missing docs the brief asked for: nobody acts on false information, so it's a requirement not met, flagged by Scope against the contract | |
 | minor | A wrong comment or docstring that the code beside it plainly contradicts (major if callers rely on it, like a public docstring) | Docstring says "returns None," but the function raises |
 | minor | Missing docs (default) | A new `--strict` flag with no mention anywhere |
 | nit | Wording | Typos, or an awkward but accurate sentence |
