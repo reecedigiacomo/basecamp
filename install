@@ -246,8 +246,12 @@ replace_with_link() {  # replace_with_link <src> <dest>: callers have checked li
   fi
   if [ -L "$dest" ]; then
     # A link holds nothing but its target, so print that instead of keeping a copy.
-    echo "  replaced a link to $(readlink "$dest")"
-    rm "$dest"
+    saved="$(readlink "$dest")"
+    if ! rm "$dest" 2>/dev/null; then
+      echo "  can't replace $dest: couldn't remove the link there. Remove it yourself, then rerun ./install."
+      return 0
+    fi
+    echo "  replaced a link to $saved"
   elif [ -e "$dest" ]; then
     # Only a real file or folder is kept, moved whole into the backup folder.
     if inside_repo "$BACKUP_DIR"; then
