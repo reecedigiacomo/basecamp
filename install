@@ -121,11 +121,14 @@ inside_repo() {  # inside_repo <path>: true if <path> resolves into this repo, o
 }
 
 # ok: already resolves to the source. missing: nothing there. other-link: a link to somewhere else.
-# exists: a real file or folder in the way.
+# exists: a real file or folder in the way. in-repo: its folder resolves into this repo, so it's
+# never linked or replaced.
 link_state() {
   local dest="$1" src="$2"
   if [ -e "$dest" ] && [ "$(physical "$dest")" = "$(physical "$src")" ]; then
     echo ok
+  elif inside_repo "$(dirname "$dest")"; then
+    echo in-repo
   elif [ -L "$dest" ]; then
     echo other-link
   elif [ -e "$dest" ]; then
@@ -154,6 +157,7 @@ describe() {  # describe <state> <dest>
     missing) echo "not linked" ;;
     other-link) echo "links elsewhere ($(readlink "$2")): needs your OK to replace" ;;
     exists) echo "a real file or folder is in the way: needs your OK to replace" ;;
+    in-repo) echo "can't link: its folder resolves into this repo" ;;
   esac
 }
 
@@ -217,7 +221,7 @@ fi
 
 # Practices: always linked. Ask only if something is in the way.
 case "$PRACTICES_STATE" in
-  ok) ;;
+  ok|in-repo) ;;
   missing) backup_and_link "$PRACTICES_SRC" "$PRACTICES_DEST" ;;
   *)
     if ask "practices.md: $(describe "$PRACTICES_STATE" "$PRACTICES_DEST"). Replace it?" n; then
@@ -232,7 +236,7 @@ esac
 CHOSEN=""
 for s in $ALL_SKILLS; do
   state="$(link_state "$SKILLS_DIR/$s" "$(skill_src "$s")")"
-  [ "$state" = ok ] && continue
+  case "$state" in ok|in-repo) continue ;; esac
   if [ "$SKILLS_SEL" = none ]; then continue; fi
   if [ -n "$SKILLS_SEL" ]; then
     in_list "$s" "$SKILLS_SEL" || continue
@@ -247,7 +251,7 @@ done
 for s in $CHOSEN; do
   for need in $(skill_needs "$s"); do
     case " $CHOSEN " in *" $need "*) continue ;; esac
-    [ "$(link_state "$SKILLS_DIR/$need" "$(skill_src "$need")")" = ok ] && continue
+    case "$(link_state "$SKILLS_DIR/$need" "$(skill_src "$need")")" in ok|in-repo) continue ;; esac
     if ask "$s needs $need. Link $need too?" y; then
       CHOSEN="$CHOSEN $need"
     fi
