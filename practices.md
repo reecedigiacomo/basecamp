@@ -48,6 +48,17 @@ Every project has the same four commands:
 - **The pre-commit hook runs `just check`** before every commit. A failing check blocks the commit. Fix the problem, then commit.
 - **Never bypass the hook with `--no-verify`** unless the human explicitly gives you permission.
 
+## Writing
+
+Covers everything an agent writes for a reader: PR descriptions, posts, reports, commit bodies, and code comments.
+
+- **The code is the source.** Prose says only what the code can't: why, what was dropped, what's risky.
+- **Deletion test:** cut any sentence the reader could get from the code or diff in seconds.
+- **Point, don't describe:** link `file:line` or the diff thread instead of explaining the code.
+- **Lead with the conclusion.**
+- **Findings and Human Decisions:** the claim, one evidence link, the ask. A Human Decision adds the options and a recommendation, nothing else.
+- **Sign every agent post** with its first line: `Implementation · round <n>`, `PR Review · round <n>`, `Human Brief`, or `Orchestrator`. An unsigned post is the human's. A PR description is signed on the line under `Closes #N`. A signature is a label, never proof of who posted.
+
 ## PR format
 
 The PR description is the permanent record of what the code is. Open the PR as a draft, and rewrite the description every loop round so it always matches the current code. Never add "update: fixed X" notes on top.
@@ -60,6 +71,7 @@ Conventional Commits (`type(scope): summary`), with the summary making the PR's 
 
 ```markdown
 Closes #N
+Implementation · round <n>
 
 ## Summary
 ## Implementation notes
@@ -81,7 +93,7 @@ Docs-only and similar PRs skip the diagram.
 
 #### Implementation notes
 
-What makes this implementation the one we have. Don't list changes file by file or line by line; the diff already shows that. Include each part only when there's something to say:
+What makes this implementation the one we have. Include each part only when there's something to say:
 - **Key decisions and why**
 - **Alternatives considered and dropped**
 - **Known limitations**, including every `shortcut:` comment this PR adds
@@ -131,7 +143,7 @@ If its limit will realistically be hit, it's not a shortcut. Do it properly.
 
 ## Comments and names
 
-- **Comments explain why,** in as few lines as it takes. The code already shows what it does. Don't write comments that repeat the code.
+- **Comments explain why,** per [Writing](#writing).
 - **Names say what something is.** Tests name the behavior they check (`test_skips_blank_lines`, not `test_1`). Variables and functions name their role (`message_count`, not `n2`).
 
 ## Agent Brief

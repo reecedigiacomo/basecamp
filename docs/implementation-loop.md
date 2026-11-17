@@ -64,10 +64,8 @@ Session (mine)   /implementation-loop #12        ← conductor
 ### Where it runs
 
 - **Its own worktree:** each brief gets a separate checkout at `.claude/worktrees/<issue#>` on branch `brief/<issue#>-<slug>`, so the loop never touches the folder I'm working in.
-- **Permissions:** stage sessions run in `auto` mode, never with permissions bypassed.
-  - **Allowed:** `just`, `git` on the PR branch, `gh pr`, `gh issue`, and `gh api` (posting reviews, resolving threads, and checking who posted something).
-  - **Denied (hard to undo, so mine):** pushing or force-pushing to `main`, deleting branches, `rm -rf` outside the worktree, reading credentials.
-  - **Force-push:** `--force-with-lease` is allowed only on the loop's own branch, enforced by a hook.
+- **Permissions:** stage sessions run in `auto` mode, never with permissions bypassed. What a session may do is set in each project's `.claude/settings.json` ([template](../template/.claude/settings.json)); I don't restate it here.
+- **`main`:** a GitHub ruleset protects it: no force pushes, no deletion, PRs only, squash only. That's the real guard; practices.md tells agents not to try.
 
 Automate it later with GitHub Actions.
 

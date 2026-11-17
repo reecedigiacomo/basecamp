@@ -4,7 +4,7 @@ The foundation every project starts from: one way of working, plus everything a 
 
 At the center is the **Implementation Loop**: a human sets the direction in a short, approved brief, and agents handle the bounded implementation, review, and verification, coming back to the human only when judgment is needed. Everything else in BaseCamp supports that loop: shared practices set the rules, CI enforces what a machine can check, skills package each stage as a command, and a project template sets all of it up in a new repo.
 
-> **Status:** Early. The practices, loop skills, docs, install script, and project template are written. CI is being built next.
+> **Status:** Early. The practices, loop skills, docs, install script, project template, and CI are written.
 
 ## How it works
 
@@ -55,13 +55,14 @@ It asks for the project's name, a one-line description, its language (Python or 
 
 | Path | What it is |
 |---|---|
-| [`practices.md`](practices.md) | The rules every project follows: commits, branches, local checks, PR format, shortcuts, comments and names, and the Agent Brief layout. Written as instructions for agents. |
+| [`practices.md`](practices.md) | The rules every project follows: commits, branches, local checks, writing, PR format, shortcuts, comments and names, and the Agent Brief layout. Written as instructions for agents. |
 | [`skills/`](skills/) | The loop's Claude Code skills: `/agent-brief`, `/implementation-loop`, `/pr-review`, plus the vendored `/grill-me` and `grilling`. |
 | [`docs/`](docs/) | Why things are the way they are: the loop, the practices, and what gets recorded for retrospectives. |
 | [`install`](install) | Sets up a machine: links the skills and practices, checks for tools. |
+| [`.github/workflows/`](.github/workflows/) | CI. `check.yml` is the reusable check generated projects call with their language; `ci.yml` runs BaseCamp's own `just check`. |
 | [`template/`](template/) | The [Copier](https://copier.readthedocs.io/) project template, configured by [`copier.yml`](copier.yml): a language-neutral core plus a Python or Rust layer. `just test` generates one project of each and checks them. |
 
-Coming next: reusable CI workflows.
+Coming next: a setup guide for the repo settings BaseCamp expects, and a first end-to-end run in a sandbox project.
 
 ## License
 

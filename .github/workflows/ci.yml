@@ -1,0 +1,31 @@
+# BaseCamp's own CI: runs the template self-test, which generates a Python and a
+# Rust project, so it needs both toolchains. Separate from check.yml, which serves
+# generated projects.
+name: CI
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install just, uv, and jq
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to "$HOME/.local/bin"
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          sudo apt-get install -y jq
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Install Rust
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain stable --component rustfmt,clippy
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+
+      - name: just check
+        run: just check
