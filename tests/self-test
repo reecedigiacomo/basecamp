@@ -22,10 +22,10 @@ fail() {
   failures=$((failures + 1))
 }
 
-generate() { # generate <language> <dest>
+generate() { # generate <language> <dest> [project_name]
   # --vcs-ref=HEAD makes Copier include uncommitted changes in the working tree.
   uvx copier copy --quiet --trust --defaults --vcs-ref=HEAD \
-    --data project_name=sample-parser \
+    --data "project_name=${3:-sample-parser}" \
     --data "description=A sample parser" \
     --data "language=$1" \
     --data github_owner=octocat \
@@ -44,6 +44,19 @@ grep -q uv "$work/rust/justfile" && fail "the Rust justfile mentions uv"
 echo "== force-push hook"
 hook="$work/python/.claude/hooks/block-force-push"
 expect() { # expect <allow|block> <command>
+echo "== project names that would break the project"
+refuse() { # refuse <language> <project_name>
+  if generate "$1" "$work/refused-$1-$2" "$2" >/dev/null 2>&1; then
+    fail "copier accepted project_name=$2 for $1"
+  else
+    echo "ok   refused $1: $2"
+  fi
+}
+refuse python class
+refuse python json
+refuse python pytest
+refuse rust std
+
   printf '%s' "$2" | jq -Rs '{tool_name: "Bash", tool_input: {command: .}}' \
     | "$hook" >/dev/null 2>&1 && code=0 || code=$?
   case "$1:$code" in
