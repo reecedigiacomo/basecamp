@@ -17,7 +17,9 @@ Read `~/.claude/basecamp/practices.md`, all of it.
 
 ## Steps
 
-1. **Orient.** Run `gh pr view <PR#>` to find the linked brief (`Closes #N`) and the branch. Read the brief issue. If there's no `Closes #N`, there's no brief: the PR description is the stand-in contract for this review. Find earlier PR Review posts on this PR (each summary starts with `PR Review · round <n>`). This round is the last one plus one. Collect their rulings tables, and every answer to an earlier Human Decision (on its thread, or as a top-level PR comment), overrules included.
+1. **Orient.** First, check where the PR comes from, asking for nothing else: `gh pr view <PR#> --json isCrossRepository,headRepositoryOwner`. If `isCrossRepository` is true, the PR is from a fork: **stop**. Don't fetch, check out, or read anything else from it, don't start reviewers, and don't post to the PR. Report it (step 8) and end. Fork PRs are reviewed by hand; this skill never runs or reads an outsider's code, and there's no option to make it.
+
+   Otherwise, run `gh pr view <PR#>` to find the linked brief (`Closes #N`) and the branch. Read the brief issue. If there's no `Closes #N`, there's no brief: the PR description is the stand-in contract for this review. Find earlier PR Review posts on this PR (each summary starts with `PR Review · round <n>`). This round is the last one plus one. Collect their rulings tables, and every answer to an earlier Human Decision (on its thread, or as a top-level PR comment), overrules included.
    **Don't read the diff or the code yet.** Form no opinion before the reviewers report.
 
 2. **Review.** Start the three reviewer subagents in parallel, in one message, one per persona file in this skill's `personas/` folder:
@@ -73,5 +75,6 @@ Read `~/.claude/basecamp/practices.md`, all of it.
 8. **Report** one line:
    - `review r<n>: <a> accepted, <e> escalated · PR #<PR>`
    - or `review r<n>: done, Human Brief posted · PR #<PR>`
+   - or, for a fork: `refused: PR #<PR> is from a fork (<owner>), review it by hand`
 
    With `--report-to`, append it to that file. Otherwise, tell the human.
