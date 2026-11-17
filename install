@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # Set up this machine for BaseCamp: link its skills and practices.md into ~/.claude,
-# and check for the tools it needs. Shows a plan first. Asks before linking a new
-# skill (unless you named it with --skills), replacing anything, or installing a tool.
+# and check for the tools it needs. Shows a plan first. Asks before linking a skill you
+# didn't name with --skills, replacing anything, or installing a tool.
 # practices.md is linked without asking: the BaseCamp skills read it.
 # Safe to rerun: anything already in place is left alone.
 set -euo pipefail
+set -f  # no globbing: names from the command line are split unquoted, and "*" must stay "*"
 
 physical() {  # physical <path>: the real path with every link resolved, or empty if it doesn't exist
   # Every step uses cd -P, so ".." inside a link target is resolved physically, not textually.
@@ -18,11 +19,13 @@ physical() {  # physical <path>: the real path with every link resolved, or empt
     esac
     hops=$((hops + 1))
   done
-  if [ -d "$p" ]; then
-    (cd -P "$p" && pwd -P)
+  # A folder we can't enter (mode 000) is resolved through its parent instead.
+  if [ -d "$p" ] && (cd -P "$p" 2>/dev/null && pwd -P); then
+    return 0
   elif [ -e "$p" ]; then
-    dir="$(cd -P "$(dirname "$p")" && pwd -P)" && echo "$dir/$(basename "$p")"
+    dir="$(cd -P "$(dirname "$p")" 2>/dev/null && pwd -P)" && echo "$dir/$(basename "$p")"
   fi
+  return 0
 }
 
 # Resolve the script itself first, so running it through a link still finds the clone.
@@ -36,18 +39,27 @@ DRY_RUN=0
 SKILLS_SEL=""   # empty: ask about each new skill
 TOOLS_SEL=""    # empty: ask about each missing tool
 
+# Where Homebrew puts rustup. It's keg-only, so it's off PATH. Empty without Homebrew.
+# Homebrew's own prefix, not "brew --prefix rustup", which can fetch formula data and is slow.
+BREW_RUSTUP=""
+if command -v brew >/dev/null 2>&1; then
+  BREW_RUSTUP="$(brew --prefix 2>/dev/null || true)/opt/rustup/bin/rustup"
+fi
+
 usage() {
-  cat <<'EOF'
+  cat <<EOF
 Usage: ./install [options]
 
   --dry-run             Show the plan and change nothing.
-  --skills <list|none>  Link only these skills (comma-separated), without asking, or none.
-  --tools <list|none>   Offer only these missing tools (comma-separated), or none.
+  --skills <list|none>  Link only these skills, or none. Still asks before linking a skill
+                        they need, or replacing anything in the way.
+  --tools <list|none>   Offer only these missing tools, or none.
   --skills-dir <path>   Where to link skills (default: ~/.claude/skills).
   -h, --help            Show this help.
 
-Skills: agent-brief, implementation-loop, pr-review, grill-me, grilling
-Tools:  copier, just, rustup, gh
+Lists are comma- or space-separated.
+Skills: $(echo $ALL_SKILLS | sed 's/ /, /g')
+Tools:  $(echo $ALL_TOOLS | sed 's/ /, /g')
 
 practices.md is always linked at ~/.claude/basecamp/practices.md: the BaseCamp skills read it.
 The links point into this clone, so keep it where it is. After moving it, rerun ./install:
@@ -55,9 +67,9 @@ broken links are repaired by default.
 EOF
 }
 
-name_list() {  # name_list <flag> <value>: the comma-separated list with all spacing removed
+name_list() {  # name_list <flag> <value>: the names as one comma-separated list
   local list
-  list="$(printf '%s' "$2" | tr -d '[:space:]' | tr -s ',' | sed 's/^,//; s/,$//')"
+  list="$(printf '%s' "$2" | tr -s ', \t\n' ',,,,' | sed 's/^,//; s/,$//')"
   if [ -z "$list" ]; then echo "$1 needs at least one name, or none" >&2; exit 2; fi
   echo "$list"
 }
@@ -106,25 +118,28 @@ tool_install_cmd() {
   case "$1" in
     copier) echo "uv tool install copier" ;;
     just) echo "brew install just" ;;
-    rustup) echo 'brew install rustup && "$(brew --prefix)/opt/rustup/bin/rustup" default stable' ;;
+    rustup) echo "brew install rustup" ;;
     gh) echo "brew install gh" ;;
   esac
 }
 
-keg_rustup() {  # Homebrew's rustup is keg-only, so it's off PATH. Prints its path if it's installed.
-  local p
-  command -v brew >/dev/null 2>&1 || return 0
-  # Homebrew's own prefix, not "brew --prefix rustup", which can fetch formula data and is slow.
-  p="$(brew --prefix 2>/dev/null || true)/opt/rustup/bin/rustup"
-  if [ -x "$p" ]; then echo "$p"; fi
+tool_needs() {  # the installer a tool's command relies on
+  case "$1" in
+    copier) echo "uv" ;;
+    *) echo "brew" ;;
+  esac
 }
 
 rustup_bin() {  # the rustup to use: the one on PATH, else Homebrew's keg-only one
-  command -v rustup 2>/dev/null || keg_rustup
+  if command -v rustup 2>/dev/null; then
+    return 0
+  elif [ -n "$BREW_RUSTUP" ] && [ -x "$BREW_RUSTUP" ]; then
+    echo "$BREW_RUSTUP"
+  fi
 }
 
 rustup_path_line() {  # the one PATH line to suggest for Homebrew's rustup
-  echo "export PATH=\"$(dirname "$(keg_rustup)"):\$PATH\""
+  echo "export PATH=\"$(dirname "$BREW_RUSTUP"):\$PATH\""
 }
 
 # installed, keg (rustup installed off PATH), no-toolchain (rustup without a toolchain), or missing
@@ -145,11 +160,10 @@ tool_state() {
   fi
 }
 
-tool_needs() {  # the installer a tool's command relies on
-  case "$1" in
-    copier) echo "uv" ;;
-    *) echo "brew" ;;
-  esac
+setup_toolchain() {  # Runs "rustup default stable". A failure is reported, never fatal.
+  local bin
+  bin="$(rustup_bin)"
+  "$bin" default stable || echo "  rustup: toolchain setup failed. Run it yourself: $bin default stable"
 }
 
 inside_repo() {  # inside_repo <path>: true if <path> resolves into this repo, or would once created
@@ -167,11 +181,15 @@ inside_repo() {  # inside_repo <path>: true if <path> resolves into this repo, o
 
 # ok: already resolves to the source. missing: nothing there. broken: a link to something that no
 # longer exists (for example, after the clone moved). other-link: a link to somewhere else.
-# exists: a real file or folder in the way. in-repo: its folder resolves into this repo, so it's
-# never linked or replaced. dead-folder: its folder is a link to nothing, so nothing can go there.
+# exists: a real file or folder in the way.
+# These three can't be linked, so they're never acted on: no-source: the source is missing from
+# this clone. in-repo: its folder resolves into this repo. dead-folder: its folder is a link to
+# nothing, so nothing can go there.
 link_state() {
   local dest="$1" src="$2"
-  if [ -e "$dest" ] && [ "$(physical "$dest")" = "$(physical "$src")" ]; then
+  if [ ! -e "$src" ]; then
+    echo no-source
+  elif [ -e "$dest" ] && [ "$(physical "$dest")" = "$(physical "$src")" ]; then
     echo ok
   elif [ -L "$(dirname "$dest")" ] && [ ! -e "$(dirname "$dest")" ]; then
     echo dead-folder
@@ -188,6 +206,12 @@ link_state() {
   fi
 }
 
+skill_state() { link_state "$SKILLS_DIR/$1" "$(skill_src "$1")"; }
+
+settled() {  # settled <state>: true if there's nothing install can do about it
+  case "$1" in ok|no-source|in-repo|dead-folder) return 0 ;; *) return 1 ;; esac
+}
+
 in_list() {  # in_list <item> <comma-separated list>
   case ",$2," in *",$1,"*) return 0 ;; *) return 1 ;; esac
 }
@@ -201,10 +225,11 @@ ask() {  # ask <question> <default y|n>
   case "$ans" in y|Y|yes|Yes) return 0 ;; *) return 1 ;; esac
 }
 
-describe() {  # describe <state> <dest>
+describe() {  # describe <state> <dest> <src>
   case "$1" in
     ok) echo "linked" ;;
     missing) echo "not linked" ;;
+    no-source) echo "can't link: $3 is missing from this clone" ;;
     broken) echo "broken link ($(readlink "$2") is gone): will repair" ;;
     dead-folder) echo "can't link: $(dirname "$2") is a link to $(readlink "$(dirname "$2")"), which is gone" ;;
     other-link) echo "links elsewhere ($(readlink "$2")): needs your OK to replace" ;;
@@ -213,53 +238,65 @@ describe() {  # describe <state> <dest>
   esac
 }
 
-backup_and_link() {  # backup_and_link <src> <dest>
-  local src="$1" dest="$2"
-  if inside_repo "$(dirname "$dest")"; then
-    echo "  refusing to link $dest: its folder resolves into this repo."
-    return 0
-  fi
-  if [ ! -e "$src" ]; then
-    echo "  can't link $dest: $src doesn't exist."
-    return 0
-  fi
+replace_with_link() {  # replace_with_link <src> <dest>: callers have checked link_state first
+  local src="$1" dest="$2" saved
   if ! mkdir -p "$(dirname "$dest")" 2>/dev/null; then
     echo "  can't link $dest: couldn't create $(dirname "$dest")."
     return 0
   fi
-  if [ -e "$dest" ] || [ -L "$dest" ]; then
-    # Only the link or folder at $dest moves, never what a link points to.
+  if [ -L "$dest" ]; then
+    # A link holds nothing but its target, so print that instead of keeping a copy.
+    saved="$(readlink "$dest")"
+    if ! rm "$dest" 2>/dev/null; then
+      echo "  can't replace $dest: couldn't remove the link there. Remove it yourself, then rerun ./install."
+      return 0
+    fi
+    echo "  replaced a link to $saved"
+  elif [ -e "$dest" ]; then
+    # Only a real file or folder is kept, moved whole into the backup folder.
     if inside_repo "$BACKUP_DIR"; then
       echo "  refusing to replace $dest: the backup folder $BACKUP_DIR resolves into this repo."
       return 0
     fi
-    if ! mkdir -p "$BACKUP_DIR" 2>/dev/null; then
-      echo "  can't replace $dest: couldn't create $BACKUP_DIR."
+    saved="$BACKUP_DIR/$(basename "$dest").$(date +%Y%m%d-%H%M%S)"
+    if ! mkdir -p "$BACKUP_DIR" 2>/dev/null || ! mv "$dest" "$saved" 2>/dev/null; then
+      echo "  can't replace $dest: couldn't move it to $saved. Move it yourself, then rerun ./install."
       return 0
     fi
-    local saved
-    saved="$BACKUP_DIR/$(basename "$dest").$(date +%Y%m%d-%H%M%S)"
-    mv "$dest" "$saved"
     echo "  moved the old one to $saved"
   fi
-  ln -s "$src" "$dest"
+  if ! ln -s "$src" "$dest" 2>/dev/null; then
+    echo "  can't link $dest: couldn't create the link there."
+    return 0
+  fi
   echo "  linked $dest"
+}
+
+apply_link() {  # apply_link <name> <src> <dest> [note]: link, asking first if something is in the way
+  local name="$1" src="$2" dest="$3" note="${4:+ $4}" state
+  state="$(link_state "$dest" "$src")"
+  settled "$state" && return 0
+  case "$state" in
+    missing) ;;
+    broken) ask "$name: $(describe "$state" "$dest" "$src"). Repair it?" y || { echo "  left $name as is.$note"; return 0; } ;;
+    *) ask "$name: $(describe "$state" "$dest" "$src"). Replace it?" n || { echo "  left $name as is.$note"; return 0; } ;;
+  esac
+  replace_with_link "$src" "$dest"
 }
 
 # ---- Plan ----
 
 PRACTICES_SRC="$REPO/practices.md"
 PRACTICES_DEST="$BASECAMP_DIR/practices.md"
-PRACTICES_STATE="$(link_state "$PRACTICES_DEST" "$PRACTICES_SRC")"
 
 echo "BaseCamp install plan"
 echo
 echo "Practices (always linked):"
-printf '  %-22s %s\n' "practices.md" "$(describe "$PRACTICES_STATE" "$PRACTICES_DEST")"
+printf '  %-22s %s\n' "practices.md" "$(describe "$(link_state "$PRACTICES_DEST" "$PRACTICES_SRC")" "$PRACTICES_DEST" "$PRACTICES_SRC")"
 echo
 echo "Skills (into $SKILLS_DIR):"
 for s in $ALL_SKILLS; do
-  printf '  %-22s %s\n' "$s" "$(describe "$(link_state "$SKILLS_DIR/$s" "$(skill_src "$s")")" "$SKILLS_DIR/$s")"
+  printf '  %-22s %s\n' "$s" "$(describe "$(skill_state "$s")" "$SKILLS_DIR/$s" "$(skill_src "$s")")"
 done
 echo
 echo "Tools:"
@@ -280,79 +317,48 @@ fi
 
 # ---- Apply ----
 
-# Practices: always linked. Ask only if something is in the way.
-case "$PRACTICES_STATE" in
-  ok|in-repo|dead-folder) ;;
-  missing) backup_and_link "$PRACTICES_SRC" "$PRACTICES_DEST" ;;
-  broken)
-    if ask "practices.md: $(describe "$PRACTICES_STATE" "$PRACTICES_DEST"). Repair it?" y; then
-      backup_and_link "$PRACTICES_SRC" "$PRACTICES_DEST"
-    fi
-    ;;
-  *)
-    if ask "practices.md: $(describe "$PRACTICES_STATE" "$PRACTICES_DEST"). Replace it?" n; then
-      backup_and_link "$PRACTICES_SRC" "$PRACTICES_DEST"
-    else
-      echo "  left practices.md as is. The skills read it from $PRACTICES_DEST."
-    fi
-    ;;
-esac
+apply_link practices.md "$PRACTICES_SRC" "$PRACTICES_DEST" "The skills read whatever is at $PRACTICES_DEST."
 
 # Skills: decide which to link, offer missing dependencies, then link.
+# Each skill is asked about at most once: DECLINED keeps a "no" from being asked again.
 CHOSEN=""
+DECLINED=""
 for s in $ALL_SKILLS; do
-  state="$(link_state "$SKILLS_DIR/$s" "$(skill_src "$s")")"
-  case "$state" in ok|in-repo|dead-folder) continue ;; esac
+  state="$(skill_state "$s")"
+  settled "$state" && continue
   if [ "$SKILLS_SEL" = none ]; then continue; fi
   if [ -n "$SKILLS_SEL" ]; then
-    in_list "$s" "$SKILLS_SEL" || continue
-    CHOSEN="$CHOSEN $s"
+    in_list "$s" "$SKILLS_SEL" && CHOSEN="$CHOSEN $s"
   elif [ "$state" != missing ]; then
-    CHOSEN="$CHOSEN $s"   # something's in the way: the replace question below covers it
+    CHOSEN="$CHOSEN $s"   # something's in the way: the replace question covers it
   elif ask "Link skill $s?" y; then
     CHOSEN="$CHOSEN $s"
+  else
+    DECLINED="$DECLINED $s"
   fi
 done
 
 for s in $CHOSEN; do
   for need in $(skill_needs "$s"); do
-    case " $CHOSEN " in *" $need "*) continue ;; esac
-    case "$(link_state "$SKILLS_DIR/$need" "$(skill_src "$need")")" in ok|in-repo|dead-folder) continue ;; esac
+    case " $CHOSEN $DECLINED " in *" $need "*) continue ;; esac
+    settled "$(skill_state "$need")" && continue
     if ask "$s needs $need. Link $need too?" y; then
       CHOSEN="$CHOSEN $need"
+    else
+      DECLINED="$DECLINED $need"
     fi
   done
 done
 
 for s in $CHOSEN; do
-  dest="$SKILLS_DIR/$s"
-  src="$(skill_src "$s")"
-  state="$(link_state "$dest" "$src")"
-  case "$state" in
-    ok) ;;
-    missing) backup_and_link "$src" "$dest" ;;
-    broken)
-      if ask "$s: $(describe "$state" "$dest"). Repair it?" y; then
-        backup_and_link "$src" "$dest"
-      else
-        echo "  left $s as is."
-      fi
-      ;;
-    *)
-      if ask "$s: $(describe "$state" "$dest"). Replace it?" n; then
-        backup_and_link "$src" "$dest"
-      else
-        echo "  left $s as is."
-      fi
-      ;;
-  esac
+  apply_link "$s" "$(skill_src "$s")" "$SKILLS_DIR/$s"
 done
 
 # Warn about any linked skill whose dependency didn't end up linked.
 for s in $ALL_SKILLS; do
-  [ "$(link_state "$SKILLS_DIR/$s" "$(skill_src "$s")")" = ok ] || continue
+  [ "$(skill_state "$s")" = ok ] || continue
   for need in $(skill_needs "$s"); do
-    if [ "$(link_state "$SKILLS_DIR/$need" "$(skill_src "$need")")" != ok ]; then
+    if [ "$(skill_state "$need")" != ok ]; then
       echo "  warning: $s won't work fully until BaseCamp's $need is linked."
     fi
   done
@@ -366,26 +372,28 @@ for t in $ALL_TOOLS; do
   if [ "$TOOLS_SEL" = none ]; then continue; fi
   if [ -n "$TOOLS_SEL" ] && ! in_list "$t" "$TOOLS_SEL"; then continue; fi
   if [ "$state" = no-toolchain ]; then
-    if ask "Set up rustup's stable toolchain with: $(rustup_bin) default stable?" n; then
-      "$(rustup_bin)" default stable || echo "  rustup: toolchain setup failed. Run it yourself: $(rustup_bin) default stable"
-    fi
+    ask "Set up rustup's stable toolchain with: $(rustup_bin) default stable?" n && setup_toolchain
     continue
   fi
   cmd="$(tool_install_cmd "$t")"
   needs="$(tool_needs "$t")"
-  if [ "$(uname)" != Darwin ] || ! command -v "$needs" >/dev/null 2>&1; then
-    echo "  $t: install it yourself ($cmd needs $needs on macOS)."
+  if ! command -v "$needs" >/dev/null 2>&1; then
+    echo "  $t: install it yourself ($cmd needs $needs)."
     continue
   fi
-  if ask "Install $t with: $cmd?" n; then
-    if sh -c "$cmd"; then
-      if [ "$t" = rustup ]; then
-        echo "  rustup is installed but not on your PATH (Homebrew keeps it separate)."
-        echo "  Add this to your shell profile: $(rustup_path_line)"
-      fi
-    else
-      echo "  $t: install failed. Run it yourself: $cmd"
+  question="Install $t with: $cmd?"
+  if [ "$t" = rustup ]; then question="Install rustup with: $cmd, then set up its stable toolchain?"; fi
+  ask "$question" n || continue
+  if ! sh -c "$cmd"; then
+    echo "  $t: install failed. Run it yourself: $cmd"
+    continue
+  fi
+  if [ "$t" = rustup ]; then
+    if ! command -v rustup >/dev/null 2>&1; then
+      echo "  rustup is installed but not on your PATH (Homebrew keeps it separate)."
+      echo "  Add this to your shell profile: $(rustup_path_line)"
     fi
+    setup_toolchain
   fi
 done
 

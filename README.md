@@ -30,6 +30,8 @@ Full details: [docs/implementation-loop.md](docs/implementation-loop.md).
 
 ## Install
 
+Fork the repo first: your fork is where you'll edit `practices.md` and the skills to fit how you work. Then clone your fork:
+
 ```sh
 git clone https://github.com/<you>/basecamp
 cd basecamp
@@ -37,11 +39,9 @@ cd basecamp
 ./install
 ```
 
-`install` links the skills into `~/.claude/skills` and `practices.md` into `~/.claude/basecamp/`, then checks for the tools BaseCamp uses (`copier`, `just`, `rustup`, `gh`). It shows a plan first, then asks before linking a new skill, replacing anything, or installing a tool. Two things happen without asking: `practices.md` is always linked, since the BaseCamp skills read it, and skills you name with `--skills` are linked directly. Anything it replaces is moved to a backup, never deleted. Run `./install --help` for options, such as choosing which skills to link or where.
+`install` links the skills into `~/.claude/skills` and `practices.md` into `~/.claude/basecamp/`, then checks for the tools BaseCamp uses (`copier`, `just`, `rustup`, `gh`). It shows a plan first, then asks before linking a skill, replacing anything, or installing a tool. `practices.md` is linked without asking, since the BaseCamp skills read it, and skills you name with `--skills` skip the "Link skill?" question. Anything real it replaces is moved to a backup, never deleted; a replaced link is printed with its old target. Run `./install --help` for options, such as choosing which skills to link or where.
 
 The links point into your clone, so editing a skill or running `git pull` takes effect right away. It also means the clone has to stay where it is: if you move it, rerun `./install` to repair the links.
-
-**Make it yours:** fork the repo, then edit `practices.md` and the skills to fit how you work.
 
 ## Start a project
 
@@ -56,7 +56,7 @@ It asks for the project's name, a one-line description, its language (Python or 
 | Path | What it is |
 |---|---|
 | [`practices.md`](practices.md) | The rules every project follows: commits, branches, local checks, writing, PR format, shortcuts, comments and names, and the Agent Brief layout. Written as instructions for agents. |
-| [`skills/`](skills/) | The loop's Claude Code skills: `/agent-brief`, `/implementation-loop`, `/pr-review`, plus the vendored `/grill-me`. |
+| [`skills/`](skills/) | The loop's Claude Code skills: `/agent-brief`, `/implementation-loop`, `/pr-review`, plus the vendored `/grill-me` and `grilling`. |
 | [`docs/`](docs/) | Why things are the way they are: the loop, the practices, and what gets recorded for retrospectives. |
 | [`install`](install) | Sets up a machine: links the skills and practices, checks for tools. |
 | [`.github/workflows/`](.github/workflows/) | CI. `check.yml` is the reusable check generated projects call with their language; `ci.yml` runs BaseCamp's own `just check`. |
