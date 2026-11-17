@@ -55,8 +55,9 @@ Read `~/.claude/basecamp/practices.md`, all of it.
      - the **rulings table** covering every blocker, major, and minor finding, always these columns in this order: reviewer, dimension, severity, ruling, one-line reason
      - a short **Nits** list: the reviewer and one line for each nit, with no ruling
      - each reviewer's extras (contract checklist, not-checked list, threat model, merge danger rating, Lean −N)
+     - a **PR description** section for accepted, deferred, and escalated findings about the PR description, which have no diff line to comment on: each with its reviewer, severity, ruling, and what must be true
      - a **For Implementation** list of the accepted findings and what must be true
-   - **Inline comments** only for accepted, deferred, and escalated findings.
+   - **Inline comments** only for accepted, deferred, and escalated findings with a code location.
    - **Resolve** earlier threads whose fixes this round confirmed (`gh api graphql`, `resolveReviewThread`).
    - **If anything was escalated,** also post a top-level **Human Decision** comment: for each decision, numbered and kept separate, the ask (the decision, your recommendation, the tradeoff), why it was escalated (which trigger), the evidence (linked threads), and whether it would change scope and how.
 
