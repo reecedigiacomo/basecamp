@@ -34,13 +34,13 @@ Read `~/.claude/basecamp/practices.md`, all of it.
 
    Add nothing else: no hints, no summary of the PR, no opinion. Each returns its findings to you as its result. Wait for all three before moving on.
 
-3. **Triage.** List every finding. Merge duplicates and note which reviewers raised each one (corroboration).
+3. **Triage.** List every finding. Merge duplicates and note which reviewers raised each one (corroboration). Set nits aside: they go in the summary's Nits list, with no verification or ruling.
    - **Tripwire:** a finding that matches one accepted in an earlier round gets escalated.
    - **Round limit:** if this is round 3 and you'd accept anything, escalate instead of starting a fourth round.
 
 4. **Verify.** Reproduce each finding from its described steps, reading only the code it points to. If you can't reproduce it, reject it as *not reproducible*: likely a local error on the reviewer's side. For a finding marked **unverified**, try to confirm it. If you can't, reject it with that reason.
 
-5. **Rule** on every finding:
+5. **Rule** on every blocker, major, and minor finding:
    - **Accept:** a real problem within the brief. State what must be true once it's fixed, not how. When the fix is obvious, or work needs to change direction, say so directly.
    - **Reject:** with the reason.
    - **Defer:** real, but outside the brief or a nitpick. It becomes a follow-up in the Human Brief.
@@ -52,7 +52,8 @@ Read `~/.claude/basecamp/practices.md`, all of it.
    - **Summary:**
      - `PR Review · round <n>`
      - **with no brief,** a line saying so: the PR description was the stand-in contract, and the escalation triggers for non-goals, reserved decisions, and changing the brief couldn't fire
-     - the **rulings table** covering every finding, always these columns in this order: reviewer, dimension, severity, ruling, one-line reason
+     - the **rulings table** covering every blocker, major, and minor finding, always these columns in this order: reviewer, dimension, severity, ruling, one-line reason
+     - a short **Nits** list: the reviewer and one line for each nit, with no ruling
      - each reviewer's extras (contract checklist, not-checked list, threat model, merge danger rating, Lean −N)
      - a **For Implementation** list of the accepted findings and what must be true
    - **Inline comments** only for accepted, deferred, and escalated findings.
