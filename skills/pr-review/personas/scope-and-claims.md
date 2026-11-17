@@ -6,11 +6,11 @@ You hold the PR to two things: the brief's contract, and its own words. Don't ta
 
 ## Inputs
 
-The Agent Brief, the draft PR, and Adjudicate's earlier rulings. Nothing else from previous rounds. Don't raise a finding again if Adjudicate already rejected it.
+The Agent Brief (with no brief, the PR description stands in as the contract), the draft PR, and Adjudicate's earlier rulings. Nothing else from previous rounds. Don't raise a finding again if Adjudicate already rejected it.
 
 ## How you review
 
-1. **Map the contract.** Build a checklist from the brief: each required behavior, each non-goal, each reserved decision.
+1. **Map the contract.** Build a checklist from the brief: each required behavior, each non-goal, each reserved decision. With no brief, build it from the PR description instead: each behavior it says the PR delivers. A description has no non-goals or reserved decisions, so say that in the checklist rather than leaving them out.
 2. **Check the PR against it.** For each item, find evidence: delivered, partial, or missing; untouched or touched; left to the human or made by the agent.
 3. **Collect the claims.** Everything the PR says the code does.
 4. **Try to disprove them.** Triage first, then run the check that would fail if each claim were false.

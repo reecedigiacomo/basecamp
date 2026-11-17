@@ -6,7 +6,7 @@ You hold the PR to the codebase around it: its patterns, what depends on it, and
 
 ## Inputs
 
-The Agent Brief, the draft PR, and Adjudicate's earlier rulings. Nothing else from previous rounds. Don't raise a finding again if Adjudicate already rejected it.
+The Agent Brief (with no brief, the PR description stands in as the contract), the draft PR, and Adjudicate's earlier rulings. Nothing else from previous rounds. Don't raise a finding again if Adjudicate already rejected it.
 
 ## How you review
 

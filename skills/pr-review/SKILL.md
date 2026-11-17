@@ -17,7 +17,7 @@ Read `~/.claude/basecamp/practices.md`, all of it.
 
 ## Steps
 
-1. **Orient.** Run `gh pr view <PR#>` to find the linked brief (`Closes #N`) and the branch. Read the brief issue. Find earlier PR Review posts on this PR (each summary starts with `PR Review · round <n>`). This round is the last one plus one. Collect their rulings tables.
+1. **Orient.** Run `gh pr view <PR#>` to find the linked brief (`Closes #N`) and the branch. Read the brief issue. If there's no `Closes #N`, there's no brief: the PR description is the stand-in contract for this review. Find earlier PR Review posts on this PR (each summary starts with `PR Review · round <n>`). This round is the last one plus one. Collect their rulings tables.
    **Don't read the diff or the code yet.** Form no opinion before the reviewers report.
 
 2. **Review.** Start the three reviewer subagents in parallel, in one message, one per persona file in this skill's `personas/` folder:
@@ -30,7 +30,7 @@ Read `~/.claude/basecamp/practices.md`, all of it.
 
    Give each one:
    - the full text of its persona file
-   - the repo, the PR number, the brief issue number, and the earlier rulings tables, copied exactly
+   - the repo, the PR number, the brief issue number (or "no brief: the PR description is the stand-in contract"), and the earlier rulings tables, copied exactly
 
    Add nothing else: no hints, no summary of the PR, no opinion. Each returns its findings to you as its result. Wait for all three before moving on.
 
@@ -46,9 +46,12 @@ Read `~/.claude/basecamp/practices.md`, all of it.
    - **Defer:** real, but outside the brief or a nitpick. It becomes a follow-up in the Human Brief.
    - **Escalate** when a finding touches the brief's non-goals or reserved decisions, the agent overstepped into the human's side, findings conflict as a real tradeoff, a fix would change the brief, the PR is a one-way door the brief didn't explicitly approve, or the tripwire or round limit trips.
 
+   **With no brief,** "the brief" above means the PR description. A description has no non-goals or reserved decisions and no brief to change, so those triggers can't fire. No brief approved a one-way door, so that trigger always fires for one.
+
 6. **Post one review** (`gh api` on the PR's reviews endpoint, event `COMMENT`):
    - **Summary:**
      - `PR Review · round <n>`
+     - **with no brief,** a line saying so: the PR description was the stand-in contract, and the escalation triggers for non-goals, reserved decisions, and changing the brief couldn't fire
      - the **rulings table** covering every finding, always these columns in this order: reviewer, dimension, severity, ruling, one-line reason
      - each reviewer's extras (contract checklist, not-checked list, threat model, merge danger rating, Lean −N)
      - a **For Implementation** list of the accepted findings and what must be true
@@ -59,7 +62,7 @@ Read `~/.claude/basecamp/practices.md`, all of it.
 7. **Route.**
    - **Accepted, nothing escalated:** done for this round.
    - **Escalated:** stay open. The human may attach to talk it through. When they decide, record the decision on its thread.
-   - **Neither:** start the Human Brief subagent with the full text of `human-brief.md` from this skill's folder, plus the repo, the PR number, and the brief issue number. Add nothing else.
+   - **Neither:** start the Human Brief subagent with the full text of `human-brief.md` from this skill's folder, plus the repo, the PR number, and the brief issue number (or "no brief"). Add nothing else.
 
 8. **Report** one line:
    - `review r<n>: <a> accepted, <e> escalated · PR #<PR>`
