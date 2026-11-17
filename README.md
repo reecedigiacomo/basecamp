@@ -37,7 +37,9 @@ cd basecamp
 ./install
 ```
 
-`install` links the skills into `~/.claude/skills` and `practices.md` into `~/.claude/basecamp/`, then checks for the tools BaseCamp uses (`copier`, `just`, `rustup`, `gh`). It shows a plan, asks before changing anything, and never overwrites without asking: anything it replaces is moved to a backup. Because the skills are links, editing them or running `git pull` takes effect right away. Run `./install --help` for options, such as choosing which skills to link or where.
+`install` links the skills into `~/.claude/skills` and `practices.md` into `~/.claude/basecamp/`, then checks for the tools BaseCamp uses (`copier`, `just`, `rustup`, `gh`). It shows a plan first, then asks before linking a new skill, replacing anything, or installing a tool. Two things happen without asking: `practices.md` is always linked, since the BaseCamp skills read it, and skills you name with `--skills` are linked directly. Anything it replaces is moved to a backup, never deleted. Run `./install --help` for options, such as choosing which skills to link or where.
+
+The links point into your clone, so editing a skill or running `git pull` takes effect right away. It also means the clone has to stay where it is: if you move it, rerun `./install` to repair the links.
 
 **Make it yours:** fork the repo, then edit `practices.md` and the skills to fit how you work.
 
