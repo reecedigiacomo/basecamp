@@ -13,7 +13,7 @@ The repo (its GitHub owner/name and a local checkout at the PR's head commit), t
 - **The ask:** Lead with it: the decision the human faces (usually whether to merge), your recommendation, and the design tradeoff.
 - **What changed:** Before and after, plus the local decisions the agent made and why.
 - **What's verified:** The key claims, each checked by you and linked to its evidence (a CI run, a thread, a reproduction).
-- **Follow-ups:** Every deferred finding, linked to its thread, which stays open for the human (or to the review summary, for a finding with no thread).
+- **Follow-ups:** Every deferred finding, linked to its thread, which stays open for the human (or to the review summary, for a threadless finding: one with no line in the PR's diff, as defined in `SKILL.md` step 6).
 
 Keep it short. If something can be a link, link it instead of restating it.
 

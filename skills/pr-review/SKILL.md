@@ -28,7 +28,7 @@ Read `~/.claude/basecamp/practices.md`, all of it.
    | Correctness & Safety | `personas/correctness-and-safety.md` |
    | Fit & Impact | `personas/fit-and-impact.md` |
 
-   First set up **the repo** for them: a local checkout at the PR's head commit, at `<tmpdir>/pr-review-<repo>-<PR#>` (`git fetch origin pull/<PR#>/head` then `git worktree add --detach <path> FETCH_HEAD`), and a separate, empty temp folder for each reviewer's probes (`mktemp -d`). If an earlier run left a worktree at that path, remove it first (`git worktree remove --force <path>`, then `git worktree prune`): the path belongs to this skill. Step 7 says when to remove them.
+   First set up **the repo** for them: a local checkout at the PR's head commit, at `<tmpdir>/pr-review-<repo>-<PR#>` (`git fetch origin pull/<PR#>/head` then `git worktree add --detach <path> FETCH_HEAD`), and a separate, empty temp folder for each reviewer's probes, at `<tmpdir>/pr-review-<repo>-<PR#>-probes/<reviewer>`. If an earlier run left a worktree or probe folders at those paths, remove them first (`git worktree remove --force <path>`, then `git worktree prune`, and delete the probes folder): the paths belong to this skill. Step 7 says when to remove them.
 
    Give each one:
    - the full text of its persona file
@@ -68,7 +68,7 @@ Read `~/.claude/basecamp/practices.md`, all of it.
    - **Accepted, nothing escalated:** done for this round.
    - **Escalated:** stay open. The human may attach to talk it through. When they decide, record the decision on its thread. A threadless finding gets its decision as a top-level PR comment that names the Human Decision it answers. These two places are the only ones Implementation and the conductor read answers from.
    - **Neither:** start the Human Brief subagent with the full text of `human-brief.md` from this skill's folder, plus the inputs its Inputs section lists. Add nothing else.
-   - **Clean up** the checkout (`git worktree remove`) and the temp folders only once nothing uses them. If anything was escalated, after you've recorded the human's decisions, before the session closes, even when findings were also accepted. Otherwise, if findings were accepted, right away. Otherwise, after the Human Brief subagent has returned. If the session closes without cleaning up, the next run's step 2 removes the leftover checkout.
+   - **Clean up** the checkout (`git worktree remove`) and the temp folders only once nothing uses them. If anything was escalated, after you've recorded the human's decisions, before the session closes, even when findings were also accepted. Otherwise, if findings were accepted, right away. Otherwise, after the Human Brief subagent has returned. If the session closes without cleaning up, the next run's step 2 removes the leftover checkout and probe folders.
 
 8. **Report** one line:
    - `review r<n>: <a> accepted, <e> escalated · PR #<PR>`

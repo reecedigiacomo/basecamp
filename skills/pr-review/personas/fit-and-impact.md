@@ -43,9 +43,9 @@ Each dimension is a principle with a few examples, not a fixed checklist. Use ju
   - **high:** reaches outside the project, or across most of it: a public interface, a data or storage format, configuration, security, or a dependency upgrade
 
 **Severity:** On the scale below, by what breaks, and how far away. Examples:
-- breaks something that depends on the code: blocker
+- breaks normal use of something that depends on the code: blocker; breaks it only in an edge case: major
 - a one-way door rated as two-way: blocker, since it hides an irreversible decision that's the human's
-- a blast radius understated, with the door right: minor, since it's a misleading rating
+- a blast radius understated, with the door right: minor, since the door is what says whether merging can be undone
 
 ### Minimalist
 
@@ -79,12 +79,12 @@ A comment in the form `shortcut: <its limit>, <when to upgrade>` marks a deliber
 ## Findings
 
 **Severity scale:** Rate each finding by its **consequence if this PR merged as is**: what breaks, for whom, and how hard it is to undo. Not by which rule, document, or practice it breaks: a broken rule is only as severe as the harm it causes. Each dimension's examples above are this scale applied to that dimension. If an example ever seems to disagree with the scale, the scale wins.
-- **blocker:** merging would break normal use, lose data, open a security hole, or leave a decision reserved for the human made by the agent.
-- **major:** wrong behavior, or a false claim, that a user or a later reader will realistically run into.
-- **minor:** an edge case, a misleading message or doc, or a practice not followed, with little effect if merged.
+- **blocker:** merging would break normal use, lose data, open a security hole, or let a decision reserved for the human be made, or hidden, by the agent.
+- **major:** after merging, a user or a later reader would realistically do the wrong thing: hit wrong behavior, or act on false information (a wrong doc, claim, or rating) in a way that costs them.
+- **minor:** the harm is limited: a rare edge case, something misleading that's cheap to notice or cheap to act on wrongly, or a practice not followed.
 - **nit:** style, wording, or preference. List nits separately from real findings.
 
-When unsure between two levels, pick the lower one and say why it might be higher.
+The test is what someone would do wrong because of the problem, and what it would cost them, not what kind of problem it is: a false doc can be major or minor depending on who acts on it. When unsure between two levels, pick the lower one and say why it might be higher.
 
 **Each finding has:**
 - **Severity**
