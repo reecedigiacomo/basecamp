@@ -4,7 +4,7 @@ The foundation every project starts from: one way of working, plus everything a 
 
 At the center is the **Implementation Loop**: a human sets the direction in a short, approved brief, and agents handle the bounded implementation, review, and verification, coming back to the human only when judgment is needed. Everything else in BaseCamp supports that loop: shared practices set the rules, CI enforces what a machine can check, skills package each stage as a command, and a project template sets all of it up in a new repo.
 
-> **Status:** Early. The practices, loop skills, and docs are written. The install script, project template, and CI are being built next.
+> **Status:** Early. The practices, loop skills, docs, and install script are written. The project template and CI are being built next.
 
 ## How it works
 
@@ -28,6 +28,19 @@ Review is done by three independent reviewers (Scope & Claims, Correctness & Saf
 
 Full details: [docs/implementation-loop.md](docs/implementation-loop.md).
 
+## Install
+
+```sh
+git clone https://github.com/<you>/basecamp
+cd basecamp
+./install --dry-run   # see the plan first
+./install
+```
+
+`install` links the skills into `~/.claude/skills` and `practices.md` into `~/.claude/basecamp/`, then checks for the tools BaseCamp uses (`copier`, `just`, `rustup`, `gh`). It shows a plan, asks before changing anything, and never overwrites without asking: anything it replaces is moved to a backup. Because the skills are links, editing them or running `git pull` takes effect right away. Run `./install --help` for options, such as choosing which skills to link or where.
+
+**Make it yours:** fork the repo, then edit `practices.md` and the skills to fit how you work.
+
 ## What's here
 
 | Path | What it is |
@@ -35,8 +48,9 @@ Full details: [docs/implementation-loop.md](docs/implementation-loop.md).
 | [`practices.md`](practices.md) | The rules every project follows: commits, branches, local checks, PR format, shortcuts, comments and names, and the Agent Brief layout. Written as instructions for agents. |
 | [`skills/`](skills/) | The loop's Claude Code skills: `/agent-brief`, `/implementation-loop`, `/pr-review`, plus the vendored `/grill-me`. |
 | [`docs/`](docs/) | Why things are the way they are: the loop, the practices, and what gets recorded for retrospectives. |
+| [`install`](install) | Sets up a machine: links the skills and practices, checks for tools. |
 
-Coming next: `install` (links the skills and practices into `~/.claude`), `template/` (a [Copier](https://copier.readthedocs.io/) template with Python and Rust layers), and reusable CI workflows.
+Coming next: `template/` (a [Copier](https://copier.readthedocs.io/) template with Python and Rust layers) and reusable CI workflows.
 
 ## License
 
