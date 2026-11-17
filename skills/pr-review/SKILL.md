@@ -38,7 +38,7 @@ Read `~/.claude/basecamp/practices.md`, all of it.
    Add nothing else: no hints, no summary of the PR, no opinion. Each returns its findings to you as its result. Wait for all three before moving on.
 
 3. **Triage.** List every finding. Merge duplicates and note which reviewers raised each one (corroboration). Set nits aside: they go in the summary's Nits list, with no verification or ruling.
-   - **Tripwire:** a finding that matches one accepted in an earlier round gets escalated.
+   - **Tripwire:** a finding that matches one accepted in an earlier round gets escalated. If the earlier round's "what must be true" was met, it's a disagreement about the requirement, not a failed fix: say in the Human Decision that the earlier requirement was met.
    - **Round limit:** if this is round 3 and you'd accept anything, escalate instead of starting a fourth round.
 
 4. **Verify.** Reproduce each finding from its described steps, reading only the code it points to. If you can't reproduce it, reject it as *not reproducible*: likely a local error on the reviewer's side. For a finding marked **unverified**, try to confirm it. If you can't, reject it with that reason.
