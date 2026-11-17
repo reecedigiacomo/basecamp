@@ -79,11 +79,13 @@ A comment in the form `shortcut: <its limit>, <when to upgrade>` marks a deliber
 
 ## Findings
 
-**Severity scale:** Your dimension criteria decide the level.
-- **blocker:** can't merge as is.
-- **major:** a real problem that should be fixed in this PR.
-- **minor:** real but small. Fixing it is cheap, and leaving it is acceptable.
-- **nit:** style or preference. List nits separately from real findings.
+**Severity scale:** Rate each finding by its **consequence if this PR merged as is**: what breaks, for whom, and how hard it is to undo. Not by which rule, document, or practice it breaks: a broken rule is only as severe as the harm it causes. Your dimension criteria above map onto this scale.
+- **blocker:** merging would break normal use, lose data, open a security hole, or leave a decision reserved for the human made by the agent.
+- **major:** wrong behavior, or a false claim, that a user or a later reader will realistically run into.
+- **minor:** an edge case, a misleading message or doc, or a practice not followed, with little effect if merged.
+- **nit:** style, wording, or preference. List nits separately from real findings.
+
+When unsure between two levels, pick the lower one and say why it might be higher.
 
 **Each finding has:**
 - **Severity**

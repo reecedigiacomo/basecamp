@@ -37,7 +37,7 @@ Read `~/.claude/basecamp/practices.md`, all of it.
 
    Add nothing else: no hints, no summary of the PR, no opinion. Each returns its findings to you as its result. Wait for all three before moving on.
 
-3. **Triage.** List every finding. Merge duplicates and note which reviewers raised each one (corroboration). Set nits aside: they go in the summary's Nits list, with no verification or ruling.
+3. **Triage.** List every finding. Merge duplicates and note which reviewers raised each one (corroboration). **Re-rate every finding's severity yourself,** by its consequence if merged as is, on the scale in the persona files: a reviewer's severity is a claim like any other, and yours is the one that counts, for the nits split, the rulings, and the table. Set nits aside: they go in the summary's Nits list, with no verification or ruling.
    - **Tripwire:** a finding that matches one accepted in an earlier round gets escalated. If the earlier round's "what must be true" was met, it's a disagreement about the requirement, not a failed fix: say in the Human Decision that the earlier requirement was met.
    - **Round limit:** if this is round 3 and you'd accept anything, escalate instead of starting a fourth round.
 
@@ -55,7 +55,7 @@ Read `~/.claude/basecamp/practices.md`, all of it.
    - **Summary:**
      - `PR Review · round <n>`
      - **with no brief,** a line saying so: the PR description was the stand-in contract, and the escalation triggers for non-goals, reserved decisions, and changing the brief couldn't fire
-     - the **rulings table** covering every blocker, major, and minor finding, always these columns in this order: reviewer, dimension, severity, ruling, one-line reason
+     - the **rulings table** covering every blocker, major, and minor finding, always these columns in this order: reviewer, dimension, severity, ruling, one-line reason. When you re-rated a finding, the severity cell shows both (`major → minor`) and the reason says why
      - a short **Nits** list: the reviewer and one line for each nit, with no ruling
      - each reviewer's extras (contract checklist, not-checked list, threat model, merge danger rating, Lean −N)
      - a **Threadless findings** section: the accepted, deferred, and escalated findings with no diff line to comment on (about the PR description or the commit history, say). These are the **threadless findings**, and this section is their home: each with its reviewer, severity, ruling, and what must be true
