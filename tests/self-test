@@ -41,7 +41,7 @@ for language in python rust; do
   (cd "$work/$language" && just check) || fail "just check in the generated $language project"
 done
 
-# uv only warns when the uv_build bound goes stale, so a warning counts as a failure here.
+# A stale uv_build bound only warns, so any build warning counts as a failure here.
 build_log=$(cd "$work/python" && uv build 2>&1) || fail "uv build in the generated Python project"
 case $build_log in
   *warning:*) echo "$build_log" >&2; fail "uv build warns in the generated Python project" ;;
