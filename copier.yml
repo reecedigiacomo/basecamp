@@ -1,0 +1,47 @@
+# Copier template for a new BaseCamp project. The template files live in template/.
+_subdirectory: template
+_min_copier_version: "9.0.0"
+
+# README.md is the project's own from the first commit on. Every other file,
+# CLAUDE.md included, updates through Copier's normal 3-way merge.
+_skip_if_exists:
+  - README.md
+
+project_name:
+  type: str
+  help: Project name (lowercase letters, digits and hyphens, starting with a letter)
+  validator: >-
+    {% if not (project_name | regex_search('^[a-z][a-z0-9-]*$')) or project_name.endswith('-') %}
+    Use lowercase letters, digits and hyphens, starting with a letter and not ending with a hyphen.
+    {% endif %}
+
+description:
+  type: str
+  help: One-line description
+  validator: >-
+    {% if not description.strip() %}
+    Give a one-line description.
+    {% elif '\n' in description %}
+    Keep the description to one line.
+    {% endif %}
+
+language:
+  type: str
+  help: Language (one per project)
+  choices:
+    - python
+    - rust
+
+github_owner:
+  type: str
+  help: GitHub owner whose BaseCamp repo hosts the central CI workflow
+  validator: >-
+    {% if not (github_owner | regex_search('^[A-Za-z0-9]([A-Za-z0-9-]{0,37}[A-Za-z0-9])?$')) %}
+    Give the GitHub user or organization that owns the BaseCamp repo, such as octocat.
+    {% endif %}
+
+# Derived, never asked or recorded.
+package_name:
+  type: str
+  when: false
+  default: "{{ project_name | replace('-', '_') }}"

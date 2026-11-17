@@ -1,0 +1,14 @@
+.DS_Store
+.env
+.env.*
+*.log
+.claude/worktrees/
+{% if language == 'python' -%}
+.venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+dist/
+{% elif language == 'rust' -%}
+target/
+{% endif -%}

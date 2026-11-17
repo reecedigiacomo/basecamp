@@ -1,0 +1,85 @@
+#!/bin/sh
+# PreToolUse hook for Bash: blocks every force-push except --force-with-lease to
+# brief/* branches. Reads the hook's JSON input on stdin; exit 2 blocks the call.
+#
+# It errs toward blocking: quotes are ignored and any command segment that runs
+# `git ... push` is checked, so a force-push hidden in `sh -c "..."` is caught too.
+
+block() {
+  echo "Blocked by .claude/hooks/block-force-push: $1" >&2
+  echo "Only 'git push --force-with-lease <remote> brief/<branch>' may force-push." >&2
+  exit 2
+}
+
+command -v jq >/dev/null 2>&1 || block "jq is required to check git push commands."
+cmd=$(jq -r '.tool_input.command // empty') || block "could not read the hook input."
+[ -n "$cmd" ] || exit 0
+
+# check_push <args after "push">: blocks unless the push is allowed.
+check_push() {
+  force="" lease="" remote="" refspecs=""
+  while [ $# -gt 0 ]; do
+    case $1 in
+      --force-with-lease | --force-with-lease=*) lease=1 ;;
+      --force | --mirror) force="$1" ;;
+      --*) ;;
+      -o) shift ;;
+      -*f*) force="$1" ;;
+      -*) ;;
+      +*) force="refspec $1" ;;
+      *)
+        if [ -z "$remote" ]; then remote=$1; else refspecs="$refspecs $1"; fi
+        ;;
+    esac
+    shift
+  done
+  [ -n "$force" ] && block "force-push ($force)."
+  [ -z "$lease" ] && return 0
+  [ -n "$refspecs" ] || block "--force-with-lease must name its remote and a brief/* branch."
+  for refspec in $refspecs; do
+    dest=${refspec#*:}
+    dest=${dest#refs/heads/}
+    case $dest in
+      brief/?*) ;;
+      *) block "--force-with-lease to '$dest', which is not a brief/* branch." ;;
+    esac
+  done
+}
+
+# check_segment <words of one simple command>: finds `git [global options] push`.
+check_segment() {
+  while [ $# -gt 0 ]; do
+    case $1 in
+      git | */git)
+        shift
+        while [ $# -gt 0 ]; do
+          case $1 in
+            -C | -c | --git-dir | --work-tree | --namespace | --exec-path | --config-env)
+              [ $# -ge 2 ] && shift
+              shift
+              ;;
+            -*) shift ;;
+            *) break ;;
+          esac
+        done
+        [ "${1:-}" = push ] || return 0
+        shift
+        check_push "$@"
+        return 0
+        ;;
+    esac
+    shift
+  done
+}
+
+set -f # no glob expansion when splitting words
+segments=$(printf '%s\n' "$cmd" | tr -d "\"'\\\\" | awk '{ gsub(/[;&|()`$]/, "\n"); print }')
+old_ifs=$IFS
+IFS='
+'
+for segment in $segments; do
+  IFS=$old_ifs
+  # shellcheck disable=SC2086 # split the segment into words on purpose
+  check_segment $segment
+done
+exit 0
