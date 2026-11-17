@@ -269,14 +269,14 @@ replace_with_link() {  # replace_with_link <src> <dest>: callers have checked li
   echo "  linked $dest"
 }
 
-apply_link() {  # apply_link <name> <src> <dest>: link, asking first if something is in the way
-  local name="$1" src="$2" dest="$3" state
+apply_link() {  # apply_link <name> <src> <dest> [note]: link, asking first if something is in the way
+  local name="$1" src="$2" dest="$3" note="${4:+ $4}" state
   state="$(link_state "$dest" "$src")"
   settled "$state" && return 0
   case "$state" in
     missing) ;;
-    broken) ask "$name: $(describe "$state" "$dest" "$src"). Repair it?" y || { echo "  left $name as is."; return 0; } ;;
-    *) ask "$name: $(describe "$state" "$dest" "$src"). Replace it?" n || { echo "  left $name as is."; return 0; } ;;
+    broken) ask "$name: $(describe "$state" "$dest" "$src"). Repair it?" y || { echo "  left $name as is.$note"; return 0; } ;;
+    *) ask "$name: $(describe "$state" "$dest" "$src"). Replace it?" n || { echo "  left $name as is.$note"; return 0; } ;;
   esac
   replace_with_link "$src" "$dest"
 }
@@ -314,7 +314,7 @@ fi
 
 # ---- Apply ----
 
-apply_link practices.md "$PRACTICES_SRC" "$PRACTICES_DEST"
+apply_link practices.md "$PRACTICES_SRC" "$PRACTICES_DEST" "The skills read whatever is at $PRACTICES_DEST."
 
 # Skills: decide which to link, offer missing dependencies, then link.
 # Each skill is asked about at most once: DECLINED keeps a "no" from being asked again.
