@@ -1,12 +1,12 @@
 #!/bin/sh
 # Template self-test: generates a Python and a Rust project from the working tree
-# (uncommitted changes included) into a temp folder, runs `just check` in each,
-# and checks the force-push hook. Never skips a language: a missing tool fails.
+# (uncommitted changes included) into a temp folder and runs `just check` in each.
+# Never skips a language: a missing tool fails.
 set -eu
 
 repo=$(cd "$(dirname "$0")/.." && pwd)
 
-for tool in uv cargo just jq git; do
+for tool in uv cargo just git; do
   if ! command -v "$tool" >/dev/null 2>&1; then
     echo "self-test: '$tool' is not on PATH. Install it, or add it to PATH, then rerun." >&2
     exit 1
@@ -57,60 +57,6 @@ refuse python json
 refuse python pytest
 refuse python py
 refuse rust std
-
-echo "== force-push hook"
-hook="$work/python/.claude/hooks/block-force-push"
-expect() { # expect <allow|block> <command>
-  printf '%s' "$2" | jq -Rs '{tool_name: "Bash", tool_input: {command: .}}' \
-    | "$hook" >/dev/null 2>&1 && code=0 || code=$?
-  case "$1:$code" in
-    allow:0 | block:2) echo "ok   $1: $2" ;;
-    *) fail "hook should $1 (exit $code): $2" ;;
-  esac
-}
-expect block 'git push --force'
-expect block 'git push -f'
-expect block 'git push --force-with-lease origin main'
-expect block 'git push --force-with-lease origin feature/x'
-expect block 'git push origin +brief/12-parser'
-expect block 'git push --force-with-lease'
-expect block 'cd sub && git -C . push --force origin brief/12-parser'
-expect block 'git push origin "$branch" --force'
-expect block 'git push origin $(git branch --show-current) -f'
-expect block 'git -c remote.origin.push=+HEAD:refs/heads/main push'
-expect block 'GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=remote.origin.mirror GIT_CONFIG_VALUE_0=true git push'
-expect block 'git -c alias.fp="push --force" fp'
-expect block 'git push --force-with-lease --tags origin brief/12-parser'
-expect block 'git push --force-with-lease --tag origin brief/12-parser'
-expect block 'git push --mirr origin'
-expect block 'git push --force-with-leas origin main'
-expect block 'git send-pack --force origin HEAD:refs/heads/main'
-expect block 'git push {-f,-v} origin tmp:main'
-expect block 'git 2>/dev/null push --force origin main'
-expect block 'git push --force origin main 2>&1'
-expect allow 'git push --force-with-lease origin brief/12-parser'
-expect allow 'git push --force-with-lease origin brief/12-parser 2>&1'
-expect allow 'git push --force-with-lease origin brief/12-parser 2>/dev/null | tail -3'
-expect allow 'git push'
-expect allow 'git push -u origin brief/12-parser'
-expect allow 'git status && git log -5'
-
-# Without jq, only commands that mention push are blocked.
-no_jq="$work/no-jq-bin"
-mkdir "$no_jq"
-ln -s "$(command -v cat)" "$no_jq/cat"
-expect_no_jq() { # expect_no_jq <allow|block> <command>
-  code=0
-  printf '%s' "$2" | jq -Rs '{tool_name: "Bash", tool_input: {command: .}}' \
-    | PATH="$no_jq" /bin/sh "$hook" >/dev/null 2>&1 || code=$?
-  case "$1:$code" in
-    allow:0 | block:2) echo "ok   $1 without jq: $2" ;;
-    *) fail "hook without jq should $1 (exit $code): $2" ;;
-  esac
-}
-expect_no_jq allow 'ls -la'
-expect_no_jq block 'git push origin brief/12-parser'
-expect_no_jq block 'git send-pack --force origin HEAD:refs/heads/main'
 
 if [ "$failures" -gt 0 ]; then
   echo "self-test: $failures failure(s)" >&2

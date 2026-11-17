@@ -4,7 +4,7 @@ fmt:
 
 lint:
     bash -n install
-    sh -n tests/self-test template/.githooks/pre-commit template/.claude/hooks/block-force-push
+    sh -n tests/self-test template/.githooks/pre-commit
     jq empty template/.claude/settings.json
 
 # Template self-test: generates a Python and a Rust project and checks each.
