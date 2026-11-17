@@ -108,6 +108,24 @@ tool_install_cmd() {
   esac
 }
 
+keg_rustup() {  # Homebrew's rustup is keg-only, so it's off PATH. Prints its path if it's installed.
+  local p
+  command -v brew >/dev/null 2>&1 || return 0
+  # Homebrew's own prefix, not "brew --prefix rustup", which can fetch formula data and is slow.
+  p="$(brew --prefix 2>/dev/null || true)/opt/rustup/bin/rustup"
+  if [ -x "$p" ]; then echo "$p"; fi
+}
+
+tool_state() {  # tool_state <tool>: installed, keg (rustup installed off PATH), or missing
+  if command -v "$1" >/dev/null 2>&1; then
+    echo installed
+  elif [ "$1" = rustup ] && [ -n "$(keg_rustup)" ]; then
+    echo keg
+  else
+    echo missing
+  fi
+}
+
 tool_needs() {  # the installer a tool's command relies on
   case "$1" in
     copier) echo "uv" ;;
@@ -216,11 +234,11 @@ done
 echo
 echo "Tools:"
 for t in $ALL_TOOLS; do
-  if command -v "$t" >/dev/null 2>&1; then
-    printf '  %-22s %s\n' "$t" "installed"
-  else
-    printf '  %-22s %s\n' "$t" "missing: $(tool_install_cmd "$t")"
-  fi
+  case "$(tool_state "$t")" in
+    installed) printf '  %-22s %s\n' "$t" "installed" ;;
+    keg) printf '  %-22s %s\n' "$t" "installed, not on your PATH: add export PATH=\"$(dirname "$(keg_rustup)"):\$PATH\"" ;;
+    missing) printf '  %-22s %s\n' "$t" "missing: $(tool_install_cmd "$t")" ;;
+  esac
 done
 echo
 
@@ -300,7 +318,7 @@ done
 # Tools: ask before installing each missing one. Never run anything piped from the internet.
 # A failed install is reported, and the rest of the run carries on.
 for t in $ALL_TOOLS; do
-  command -v "$t" >/dev/null 2>&1 && continue
+  [ "$(tool_state "$t")" = missing ] || continue
   if [ "$TOOLS_SEL" = none ]; then continue; fi
   if [ -n "$TOOLS_SEL" ] && ! in_list "$t" "$TOOLS_SEL"; then continue; fi
   cmd="$(tool_install_cmd "$t")"
