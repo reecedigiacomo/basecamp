@@ -68,7 +68,7 @@ Read `~/.claude/basecamp/practices.md`, all of it. Everything you post follows i
      - a **For Implementation** list of the accepted findings and what must be true
    - **Inline comments,** each signed `PR Review · round <n>`, only for accepted, deferred, and escalated findings on a line in the PR's diff. Never anchor a finding to a nearby line instead: it's threadless.
    - **Resolve** earlier threads whose fixes this round confirmed (`gh api graphql`, `resolveReviewThread`). Never resolve deferred threads: they stay open for the human, as follow-ups in the Human Brief.
-   - **If anything was escalated,** also post a top-level **Human Decision** comment, signed `PR Review · round <n>`: one numbered item per decision, each the claim, one evidence link (its thread, or the review summary for a threadless finding), the options, and your recommendation.
+   - **If anything was escalated,** also post a top-level **Human Decision** comment, signed `PR Review · round <n>`: one numbered item per decision, each the claim, one evidence link (its thread, or the review summary for a threadless finding), the options, each saying whether it changes the brief, and your recommendation.
 
 7. **Route.**
    - **Accepted, nothing escalated:** done for this round.
