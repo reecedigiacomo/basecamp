@@ -14,8 +14,12 @@ permissions:
   contents: read
 
 jobs:
+  # The check name callers see (`check / check` from the template) comes from this
+  # job's display name, which is its id while no `name:` is set. Rulesets that require
+  # the check match that name, so renaming the id or adding a `name:` needs a new major tag.
   check:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - name: Reject an unknown language
         if: inputs.language != 'python' && inputs.language != 'rust'
