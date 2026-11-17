@@ -10,5 +10,6 @@ dependencies = []
 dev = ["pytest>=8", "ruff>=0.8"]
 
 [build-system]
+# `<1`, not the next-minor bound uv suggests: that goes stale and warns again every uv minor release.
 requires = ["uv_build>=0.11,<1"]
 build-backend = "uv_build"
