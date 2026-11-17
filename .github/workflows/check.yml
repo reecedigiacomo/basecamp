@@ -14,6 +14,9 @@ permissions:
   contents: read
 
 jobs:
+  # The job id is part of the v1 interface: callers see it in the status check name
+  # (`check / check` from the template) and rulesets require that name. Renaming it
+  # needs a new major tag.
   check:
     runs-on: ubuntu-latest
     steps:
