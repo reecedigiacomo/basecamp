@@ -49,7 +49,7 @@ Read `~/.claude/basecamp/practices.md`, all of it.
    - **Defer:** real, but outside the brief or a nitpick. It becomes a follow-up in the Human Brief.
    - **Escalate** when a finding touches the brief's non-goals or reserved decisions, the agent overstepped into the human's side, findings conflict as a real tradeoff, a fix would change the brief, the PR is a one-way door the brief didn't explicitly approve, or the tripwire or round limit trips.
 
-   **With no brief,** "the brief" above means the PR description. A description has no non-goals or reserved decisions and no brief to change, so those triggers can't fire. No brief approved a one-way door, so that trigger always fires for one.
+   **With no brief,** "the brief" above means the PR description. A description has no non-goals or reserved decisions and no brief to change, so those triggers can't fire. No brief approved a one-way door, so that trigger always fires for one. A real finding outside the PR's stated scope is Deferred, not Rejected: reject only findings that are wrong or can't be reproduced.
 
 6. **Post one review** (`gh api` on the PR's reviews endpoint, event `COMMENT`):
    - **Summary:**
