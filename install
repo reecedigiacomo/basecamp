@@ -265,7 +265,10 @@ replace_with_link() {  # replace_with_link <src> <dest>: callers have checked li
     fi
     echo "  moved the old one to $saved"
   fi
-  ln -s "$src" "$dest"
+  if ! ln -s "$src" "$dest" 2>/dev/null; then
+    echo "  can't link $dest: couldn't create the link there."
+    return 0
+  fi
   echo "  linked $dest"
 }
 
