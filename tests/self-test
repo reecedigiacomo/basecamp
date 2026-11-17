@@ -42,10 +42,15 @@ for language in python rust; do
 done
 
 # A stale uv_build bound only warns, so any build warning counts as a failure here.
-build_log=$(cd "$work/python" && uv build 2>&1) || fail "uv build in the generated Python project"
-case $build_log in
-  *warning:*) echo "$build_log" >&2; fail "uv build warns in the generated Python project" ;;
-esac
+# --color never: FORCE_COLOR or CLICOLOR_FORCE would color "warning:" and hide it from the match.
+if build_log=$(cd "$work/python" && uv build --color never 2>&1); then
+  case $build_log in
+    *warning:*) echo "$build_log" >&2; fail "uv build warns in the generated Python project" ;;
+  esac
+else
+  echo "$build_log" >&2
+  fail "uv build in the generated Python project"
+fi
 
 grep -q cargo "$work/python/justfile" && fail "the Python justfile mentions cargo"
 grep -q uv "$work/rust/justfile" && fail "the Rust justfile mentions uv"
