@@ -107,6 +107,19 @@ physical() {  # physical <path>: the real path with every link resolved, or empt
   fi
 }
 
+inside_repo() {  # inside_repo <path>: true if <path> resolves into this repo, or would once created
+  local p="$1" rest=""
+  # Resolve the nearest part that exists, so nothing has to be created to check.
+  while [ ! -e "$p" ] && [ ! -L "$p" ]; do
+    rest="/$(basename "$p")$rest"
+    p="$(dirname "$p")"
+  done
+  case "$(physical "$p")$rest/" in
+    "$REPO"/*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
 # ok: already resolves to the source. missing: nothing there. other-link: a link to somewhere else.
 # exists: a real file or folder in the way.
 link_state() {
@@ -146,13 +159,11 @@ describe() {  # describe <state> <dest>
 
 backup_and_link() {  # backup_and_link <src> <dest>
   local src="$1" dest="$2" real
+  if inside_repo "$(dirname "$dest")"; then
+    echo "  refusing to link $dest: its folder resolves into this repo."
+    return 0
+  fi
   mkdir -p "$(dirname "$dest")"
-  case "$(physical "$(dirname "$dest")")/" in
-    "$REPO"/*)
-      echo "  refusing to link $dest: its folder resolves into this repo."
-      return 0
-      ;;
-  esac
   if [ -e "$dest" ] || [ -L "$dest" ]; then
     real="$(physical "$dest")"
     case "$real/" in
@@ -167,7 +178,6 @@ backup_and_link() {  # backup_and_link <src> <dest>
     mv "$dest" "$saved"
     echo "  moved the old one to $saved"
   fi
-  mkdir -p "$(dirname "$dest")"
   ln -s "$src" "$dest"
   echo "  linked $dest"
 }
