@@ -81,6 +81,11 @@ expect block 'git -c remote.origin.push=+HEAD:refs/heads/main push'
 expect block 'GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=remote.origin.mirror GIT_CONFIG_VALUE_0=true git push'
 expect block 'git -c alias.fp="push --force" fp'
 expect block 'git push --force-with-lease --tags origin brief/12-parser'
+expect block 'git push --force-with-lease --tag origin brief/12-parser'
+expect block 'git push --mirr origin'
+expect block 'git push --force-with-leas origin main'
+expect block 'git send-pack --force origin HEAD:refs/heads/main'
+expect block 'git push {-f,-v} origin tmp:main'
 expect allow 'git push --force-with-lease origin brief/12-parser'
 expect allow 'git push'
 expect allow 'git push -u origin brief/12-parser'
@@ -101,6 +106,7 @@ expect_no_jq() { # expect_no_jq <allow|block> <command>
 }
 expect_no_jq allow 'ls -la'
 expect_no_jq block 'git push origin brief/12-parser'
+expect_no_jq block 'git send-pack --force origin HEAD:refs/heads/main'
 
 if [ "$failures" -gt 0 ]; then
   echo "self-test: $failures failure(s)" >&2

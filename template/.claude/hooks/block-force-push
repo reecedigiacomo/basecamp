@@ -2,10 +2,11 @@
 # PreToolUse hook for Bash: blocks every force-push except --force-with-lease to
 # brief/* branches. Reads the hook's JSON input on stdin; exit 2 blocks the call.
 #
-# It errs toward blocking: quotes are ignored and any command segment that runs
-# `git ... push` is checked, so a force-push hidden in `sh -c "..."` is caught too.
-# Anything it can't read from the command text (a shell expansion, inline config)
-# blocks the push rather than guessing.
+# A backstop for realistic mistakes, not a guarantee: branch protection on main
+# is the real wall. It errs toward blocking: quotes are ignored and any command
+# segment that runs `git ... push` is checked, so a force-push hidden in
+# `sh -c "..."` is caught too. Anything it can't read from the command text (a
+# shell expansion, inline config) blocks the push rather than guessing.
 
 block() {
   echo "Blocked by .claude/hooks/block-force-push: $1" >&2
@@ -17,7 +18,7 @@ input=$(cat) || block "could not read the hook input."
 if ! command -v jq >/dev/null 2>&1; then
   # Without jq the command can't be parsed, so block anything that could be a push.
   case $input in
-    *push*) block "jq is required to check commands that mention 'push'." ;;
+    *push* | *send-pack*) block "jq is required to check commands that mention 'push'." ;;
     *) exit 0 ;;
   esac
 fi
@@ -33,21 +34,33 @@ esac
 
 # check_push <args after "push">: blocks unless the push is allowed.
 check_push() {
-  force="" lease="" wide="" remote="" refspecs=""
+  force="" lease="" wide="" remote="" refspecs="" options_done=""
   while [ $# -gt 0 ]; do
-    case $1 in
-      *'$'*) block "the push's arguments contain a shell expansion ($1), which can't be checked." ;;
-      --force-with-lease | --force-with-lease=*) lease=1 ;;
-      --force | --mirror) force="$1" ;;
-      --all | --branches | --tags | --follow-tags) wide="$1" ;;
-      --*) ;;
+    case $options_done$1 in
+      *'$'* | *'{'*) block "the push's arguments contain a shell expansion ($1), which can't be checked." ;;
+      --) options_done=1 ;;
+      --no-*) ;;
+      --*)
+        # git accepts any unambiguous prefix of a long option (--mirr, --tag).
+        opt=${1%%=*}
+        case $opt in
+          --force-*) case --force-with-lease in "$opt"*) lease=1 ;; esac ;;
+          *)
+            case --force in "$opt"*) force="$1" ;; esac
+            case --mirror in "$opt"*) force="$1" ;; esac
+            for wide_opt in --all --branches --tags --follow-tags; do
+              case $wide_opt in "$opt"*) wide="$1" ;; esac
+            done
+            ;;
+        esac
+        ;;
       -o)
         [ $# -ge 2 ] && shift
         ;;
       -*f*) force="$1" ;;
       -*) ;;
-      +*) force="refspec $1" ;;
       *)
+        case $1 in +*) force="refspec $1" ;; esac
         if [ -z "$remote" ]; then remote=$1; else refspecs="$refspecs $1"; fi
         ;;
     esac
@@ -95,10 +108,11 @@ check_segment() {
           esac
         done
         case $(printf '%s' "$inline_config" | tr '[:upper:]' '[:lower:]') in
-          *alias.* | *'$'*) block "git -c$inline_config could hide a force-push." ;;
+          *alias.* | *'$'* | *'{'*) block "git -c$inline_config could hide a force-push." ;;
         esac
         case ${1:-} in
-          *'$'*) block "the git subcommand is a shell expansion (${1:-}), which can't be checked." ;;
+          *'$'* | *'{'*) block "the git subcommand is a shell expansion (${1:-}), which can't be checked." ;;
+          send-pack) block "git send-pack can force-push; use git push." ;;
           push) ;;
           *) return 0 ;;
         esac
