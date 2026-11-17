@@ -52,11 +52,18 @@ The links point into this clone, so keep it where it is. After moving it, rerun 
 EOF
 }
 
+name_list() {  # name_list <flag> <value>: the comma-separated list with all spacing removed
+  local list
+  list="$(printf '%s' "$2" | tr -d '[:space:]')"
+  if [ -z "$list" ]; then echo "$1 needs a value" >&2; exit 2; fi
+  echo "$list"
+}
+
 while [ $# -gt 0 ]; do
   case "$1" in
     --dry-run) DRY_RUN=1 ;;
-    --skills) SKILLS_SEL="${2:?--skills needs a value}"; shift ;;
-    --tools) TOOLS_SEL="${2:?--tools needs a value}"; shift ;;
+    --skills) SKILLS_SEL="$(name_list --skills "${2-}")"; shift ;;
+    --tools) TOOLS_SEL="$(name_list --tools "${2-}")"; shift ;;
     --skills-dir) SKILLS_DIR="${2:?--skills-dir needs a path}"; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
