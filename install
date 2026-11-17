@@ -6,7 +6,25 @@
 # Safe to rerun: anything already in place is left alone.
 set -euo pipefail
 
-REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+physical() {  # physical <path>: the real path with every link resolved, or empty if it doesn't exist
+  local p="$1" target hops=0
+  while [ -L "$p" ] && [ "$hops" -lt 40 ]; do
+    target="$(readlink "$p")"
+    case "$target" in
+      /*) p="$target" ;;
+      *) p="$(dirname "$p")/$target" ;;
+    esac
+    hops=$((hops + 1))
+  done
+  if [ -d "$p" ]; then
+    (cd "$p" && pwd -P)
+  elif [ -e "$p" ]; then
+    echo "$(cd "$(dirname "$p")" && pwd -P)/$(basename "$p")"
+  fi
+}
+
+# Resolve the script itself first, so running it through a link still finds the clone.
+REPO="$(dirname "$(physical "${BASH_SOURCE[0]}")")"
 SKILLS_DIR="$HOME/.claude/skills"
 BASECAMP_DIR="$HOME/.claude/basecamp"
 BACKUP_DIR="$BASECAMP_DIR/backup"
@@ -90,23 +108,6 @@ tool_needs() {  # the installer a tool's command relies on
   esac
 }
 
-physical() {  # physical <path>: the real path with every link resolved, or empty if it doesn't exist
-  local p="$1" target hops=0
-  while [ -L "$p" ] && [ "$hops" -lt 40 ]; do
-    target="$(readlink "$p")"
-    case "$target" in
-      /*) p="$target" ;;
-      *) p="$(dirname "$p")/$target" ;;
-    esac
-    hops=$((hops + 1))
-  done
-  if [ -d "$p" ]; then
-    (cd "$p" && pwd -P)
-  elif [ -e "$p" ]; then
-    echo "$(cd "$(dirname "$p")" && pwd -P)/$(basename "$p")"
-  fi
-}
-
 inside_repo() {  # inside_repo <path>: true if <path> resolves into this repo, or would once created
   local p="$1" rest=""
   # Resolve the nearest part that exists, so nothing has to be created to check.
@@ -165,6 +166,10 @@ backup_and_link() {  # backup_and_link <src> <dest>
   local src="$1" dest="$2" real
   if inside_repo "$(dirname "$dest")"; then
     echo "  refusing to link $dest: its folder resolves into this repo."
+    return 0
+  fi
+  if [ ! -e "$src" ]; then
+    echo "  can't link $dest: $src doesn't exist."
     return 0
   fi
   mkdir -p "$(dirname "$dest")"
