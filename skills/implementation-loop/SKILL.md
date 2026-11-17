@@ -11,7 +11,7 @@ You are the conductor for brief #<issue>. You start each stage in a fresh, named
 
 ## Before you start
 
-- Read `~/.claude/basecamp/practices.md`, all of it.
+- Read `~/.claude/basecamp/practices.md`, all of it. Anything you post is signed `Orchestrator`, per its Writing section.
 - Your first output to the human is:
   > Name this session: `/rename <repo> · conductor`
 - The **results file** for this brief is `$TMPDIR/implementation-loop/<repo>-<issue#>.log`. Create it if it doesn't exist. Stage sessions append one line to it when they finish.
