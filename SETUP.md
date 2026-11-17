@@ -14,7 +14,7 @@ From nothing to a repo ready for the Implementation Loop. The GitHub settings ar
 
 ## 2. Create the GitHub repo and push
 
-Pick the repo's visibility first: steps 4 and 6 need a public repo or a paid plan. On a free personal account or a Free organization, a private repo doesn't enforce rulesets (step 4) and doesn't offer secret scanning or push protection (step 6).
+Pick the repo's visibility first: step 4 needs a public repo or a paid plan (on a free personal account or a Free organization, a private repo doesn't enforce rulesets), and step 6 applies only to a public repo.
 
 - [ ] On GitHub, create an empty repo (no README, license, or `.gitignore`), named after the project.
 - [ ] Copier doesn't make a git repo, so make one, commit, and push to `main`, using the repo's URL:
@@ -62,6 +62,8 @@ In **Settings → General → Pull Requests**:
 - [ ] **Automatically delete head branches:** on.
 
 ## 6. Security
+
+Public repo: turn these on. Private repo: skip this step.
 
 In **Settings → Advanced Security** (named **Code security** on some accounts):
 
