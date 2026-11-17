@@ -61,7 +61,7 @@ Read `~/.claude/basecamp/practices.md`, all of it.
      - a **PR description** section for accepted, deferred, and escalated findings about the PR description, which have no diff line to comment on: each with its reviewer, severity, ruling, and what must be true
      - a **For Implementation** list of the accepted findings and what must be true
    - **Inline comments** only for accepted, deferred, and escalated findings with a code location.
-   - **Resolve** earlier threads whose fixes this round confirmed (`gh api graphql`, `resolveReviewThread`).
+   - **Resolve** earlier threads whose fixes this round confirmed (`gh api graphql`, `resolveReviewThread`). Never resolve deferred threads: they stay open for the human, as follow-ups in the Human Brief.
    - **If anything was escalated,** also post a top-level **Human Decision** comment: for each decision, numbered and kept separate, the ask (the decision, your recommendation, the tradeoff), why it was escalated (which trigger), the evidence (linked threads), and whether it would change scope and how.
 
 7. **Route.**
