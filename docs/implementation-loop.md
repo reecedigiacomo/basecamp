@@ -39,11 +39,8 @@ An agentic engineering pattern. It starts by defining something that can be iter
    - **Scope changes:** If a decision would change scope, the request says so plainly, along with what it changes. The Agent Brief gets updated to match.
    - **Answering:** I answer on the escalated PR thread. The conductor **keeps that round's review session open**, so I can `claude attach` and talk it through. Before it closes, the session records my decision where [`/pr-review`](../skills/pr-review/SKILL.md) step 7 says, which is where Implementation and the conductor read it. Then I run `/implementation-loop <issue#>` (or say "resume" to an open conductor), and the decision goes to Implementation with the next round.
    - **Reset:** The tripwire and round limit reset for the affected findings.
-4. **Human Brief** (a subagent started by the review session): Written in a fresh context, so the session's rulings and reasoning don't cloud it. It's given only the fixed inputs (the Agent Brief, the PR, and its threads), and it posts its own top-level comment on the PR (not the PR description). What only I can decide. *Keep the human oriented, maximize leverage, and spend human attention where it counts.*
-   - **The ask:** Lead with it, along with a recommendation and the design tradeoff.
-   - **What changed:** Show before and after, and explain the local decisions the agent made.
-   - **What's verified:** Check the key claims and link to the evidence.
-   - **Follow-ups:** Deferred findings.
+4. **Human Brief** (a subagent started by the review session): Written in a fresh context, so the session's rulings and reasoning don't cloud it. It's given only the fixed inputs that [its file](../skills/pr-review/human-brief.md) lists, and it posts its own top-level comment on the PR (not the PR description). What only I can decide. *Keep the human oriented, maximize leverage, and spend human attention where it counts.*
+   - **Layout:** defined in [its file](../skills/pr-review/human-brief.md): the ask first, with a recommendation and the design tradeoff, then what changed, what's verified, and follow-ups.
 
 ## Running it
 

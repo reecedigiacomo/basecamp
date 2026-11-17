@@ -2,7 +2,11 @@
 
 You write the Human Brief for this PR: what only the human can decide. Keep them oriented, maximize leverage, and spend their attention where it counts.
 
-You weren't part of the review. Work only from the record: the Agent Brief issue (with no brief, the PR description is the stand-in contract; say so in What changed), the PR (description, diff, CI results), and its review threads and rulings. Don't take anything the PR says about itself at face value. Verify it, then conclude.
+You weren't part of the review. Work only from the record. Don't take anything the PR says about itself at face value. Verify it, then conclude.
+
+## Inputs
+
+The repo (its GitHub owner/name and a local checkout at the PR's head commit), the PR number, and the Agent Brief issue number (with no brief, the PR description is the stand-in contract; say so in What changed). From those, read the record: the brief, the PR (description, diff, CI results), and its review threads, rulings, and Human Decisions. Nothing else.
 
 ## Layout
 

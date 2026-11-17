@@ -67,7 +67,7 @@ Read `~/.claude/basecamp/practices.md`, all of it.
 7. **Route.**
    - **Accepted, nothing escalated:** done for this round.
    - **Escalated:** stay open. The human may attach to talk it through. When they decide, record the decision on its thread. A finding with no thread (one about the PR description, say) gets its decision as a top-level PR comment that names the Human Decision it answers. These two places are the only ones Implementation and the conductor read answers from.
-   - **Neither:** start the Human Brief subagent with the full text of `human-brief.md` from this skill's folder, plus the repo (the GitHub owner/name and the local checkout path), the PR number, and the brief issue number (or "no brief"). Add nothing else.
+   - **Neither:** start the Human Brief subagent with the full text of `human-brief.md` from this skill's folder, plus the inputs its Inputs section lists. Add nothing else.
 
 8. **Report** one line:
    - `review r<n>: <a> accepted, <e> escalated · PR #<PR>`
