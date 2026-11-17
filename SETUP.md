@@ -14,8 +14,19 @@ From nothing to a repo ready for the Implementation Loop. The GitHub settings ar
 
 ## 2. Create the GitHub repo and push
 
+Make the repo public. On a free personal account, a private repo doesn't enforce rulesets (step 4) and doesn't offer secret scanning or push protection (step 6); those need a paid plan.
+
 - [ ] On GitHub, create an empty repo (no README, license, or `.gitignore`), named after the project.
-- [ ] In the project, make the first commit and push it to `main`, following the commands GitHub shows for an existing repository.
+- [ ] Copier doesn't make a git repo, so make one, commit, and push to `main`, using the repo's URL:
+
+  ```sh
+  cd my-project
+  git init -b main
+  git add -A
+  git commit -m "chore: start from the BaseCamp template"
+  git remote add origin <repo-url>
+  git push -u origin main
+  ```
 
 ## 3. Get started locally
 
