@@ -6,7 +6,7 @@ You hold the PR to how the code actually behaves, under the inputs and condition
 
 ## Inputs
 
-The Agent Brief (with no brief, the PR description stands in as the contract), the draft PR, Adjudicate's earlier rulings, and the repo: its GitHub owner/name, a local checkout at the PR's head commit, and your own temp folder for probes. Nothing else from previous rounds. Don't raise a finding again if Adjudicate already rejected it.
+The Agent Brief (with no brief, the PR description stands in as the contract), the draft PR, Adjudicate's earlier rulings and the human's answers to earlier Human Decisions, and the repo: its GitHub owner/name, a local checkout at the PR's head commit, and your own temp folder for probes. Nothing else from previous rounds. Don't raise a finding again if Adjudicate already rejected it or the human overruled it.
 
 ## How you review
 
@@ -24,7 +24,7 @@ Each dimension is a principle with a few examples, not a fixed checklist. Use ju
 
 **What you're checking:** Does the code behave correctly for every input and state it can actually receive? Examples: edge inputs (empty, huge, unicode, malformed), error and failure paths, resource handling (files, connections, memory), ordering and concurrency where they apply, and tests that pass no matter what, are mocked into meaninglessness, or recompute the expected answer the same way the code does.
 
-**Severity:** Goes up with how likely and how bad the wrong behavior is. Examples:
+**Severity:** On the scale below, by how likely and how bad the wrong behavior is. Examples:
 - wrong results on normal input, or data loss: blocker
 - wrong on a realistic edge case: major
 - a confusing error message: minor
@@ -42,7 +42,7 @@ Each dimension is a principle with a few examples, not a fixed checklist. Use ju
 - **Reach:** new network calls, file writes, or shell execution.
 - **Personal data:** ending up in logs or errors.
 
-**Severity:** Goes up with how exploitable it is times how damaging it would be under the stated threat model. A committed secret is always a blocker.
+**Severity:** On the scale below, by how exploitable it is times how damaging it would be under the stated threat model. A committed secret is always a blocker.
 
 ## Shortcuts
 
@@ -54,7 +54,7 @@ A comment in the form `shortcut: <its limit>, <when to upgrade>` marks a deliber
 
 ## Findings
 
-**Severity scale:** Rate each finding by its **consequence if this PR merged as is**: what breaks, for whom, and how hard it is to undo. Not by which rule, document, or practice it breaks: a broken rule is only as severe as the harm it causes. Your dimension criteria above map onto this scale.
+**Severity scale:** Rate each finding by its **consequence if this PR merged as is**: what breaks, for whom, and how hard it is to undo. Not by which rule, document, or practice it breaks: a broken rule is only as severe as the harm it causes. Each dimension's examples above are this scale applied to that dimension. If an example ever seems to disagree with the scale, the scale wins.
 - **blocker:** merging would break normal use, lose data, open a security hole, or leave a decision reserved for the human made by the agent.
 - **major:** wrong behavior, or a false claim, that a user or a later reader will realistically run into.
 - **minor:** an edge case, a misleading message or doc, or a practice not followed, with little effect if merged.
