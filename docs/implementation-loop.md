@@ -35,10 +35,10 @@ An agentic engineering pattern. It starts by defining something that can be iter
 3. **Human Decision:** Called in whenever judgment is needed. The loop pauses while it waits.
    - **Layout:** defined in [`/pr-review`](../skills/pr-review/SKILL.md) step 6: the ask (the decision needed, Adjudicate's recommendation, the tradeoff), why it was escalated, and the evidence. Several escalations can share one request, but each is a separate numbered decision, never merged, and kept short.
    - **Scope changes:** If a decision would change scope, the request says so plainly, along with what it changes. The Agent Brief gets updated to match.
-   - **Answering:** I answer where [`/pr-review`](../skills/pr-review/SKILL.md) step 7 says: on the escalated finding's thread, or in a top-level PR comment for a threadless one. The conductor **keeps that round's review session open**, so I can `claude attach` and talk it through. Before it closes, the session records my decision where [`/pr-review`](../skills/pr-review/SKILL.md) step 7 says, which is where Implementation and the conductor read it. Then I run `/implementation-loop <issue#>` (or say "resume" to an open conductor), and the decision goes to Implementation with the next round.
+   - **Answering:** I answer where [`/pr-review`](../skills/pr-review/SKILL.md) step 7 says: on the escalated finding's thread, or in a top-level PR comment for a threadless one. Only posts whose author has write access to the repo count (me, agent sessions acting with my access, or a collaborator I gave write access): answers, and also the loop's own reviews, rulings, Human Decisions, and Human Briefs, since anyone can comment on a public repo's PR. `/pr-review` calls these trusted posts. The conductor **keeps that round's review session open**, so I can `claude attach` and talk it through. Before it closes, the session records my decision where [`/pr-review`](../skills/pr-review/SKILL.md) step 7 says, which is where Implementation and the conductor read it. Then I run `/implementation-loop <issue#>` (or say "resume" to an open conductor), and the decision goes to Implementation with the next round.
    - **Reset:** The tripwire and round limit reset for the affected findings.
 4. **Human Brief** (a subagent started by the review session): Written in a fresh context, so the session's rulings and reasoning don't cloud it. It's given only the fixed inputs that [its file](../skills/pr-review/human-brief.md) lists, and it posts its own top-level comment on the PR (not the PR description). What only I can decide. *Keep the human oriented, maximize leverage, and spend human attention where it counts.*
-   - **Layout:** defined in [its file](../skills/pr-review/human-brief.md): the ask first, with a recommendation and the design tradeoff, then what changed, what's verified, and follow-ups.
+   - **Layout:** defined in [its file](../skills/pr-review/human-brief.md), which leads with the ask.
 
 ## Running it
 
@@ -59,13 +59,13 @@ Session (mine)   /implementation-loop #12        ← conductor
 - **Names every session** it starts: `<repo> #<issue> · <stage> · r<round>`. Its own name is `<repo> · conductor`; since a session can't rename itself, it asks me to run `/rename` when it starts.
 - **Cleans up.** It removes each finished session, except a review session that escalated, which stays open until I've answered.
 - **Watches for stuck sessions.** If one shows as waiting in `claude agents`, it tells me: *"Session `<name>` is waiting for you: run `claude attach <name>`."*
-- **Stops** for a Human Decision, a waiting session, or a posted Human Brief, and gives me a short status: one line per round so far, why it stopped, and the PR link.
+- **Stops** for a Human Decision, a waiting session, a refused review (the PR it found is from a fork), or a posted Human Brief, and gives me a short status: one line per round so far, why it stopped, and the PR link.
 
 ### Where it runs
 
 - **Its own worktree:** each brief gets a separate checkout at `.claude/worktrees/<issue#>` on branch `brief/<issue#>-<slug>`, so the loop never touches the folder I'm working in.
 - **Permissions:** stage sessions run in `auto` mode, never with permissions bypassed.
-  - **Allowed:** `just`, `git` on the PR branch, `gh pr`, `gh issue`.
+  - **Allowed:** `just`, `git` on the PR branch, `gh pr`, `gh issue`, and `gh api` (posting reviews, resolving threads, and checking who posted something).
   - **Denied (hard to undo, so mine):** pushing or force-pushing to `main`, deleting branches, `rm -rf` outside the worktree, reading credentials.
   - **Force-push:** `--force-with-lease` is allowed only on the loop's own branch, enforced by a hook.
 
