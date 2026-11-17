@@ -4,7 +4,7 @@ The foundation every project starts from: one way of working, plus everything a 
 
 At the center is the **Implementation Loop**: a human sets the direction in a short, approved brief, and agents handle the bounded implementation, review, and verification, coming back to the human only when judgment is needed. Everything else in BaseCamp supports that loop: shared practices set the rules, CI enforces what a machine can check, skills package each stage as a command, and a project template sets all of it up in a new repo.
 
-> **Status:** Early. The practices, loop skills, docs, and install script are written. The project template and CI are being built next.
+> **Status:** Early. The practices, loop skills, docs, install script, and project template are written. CI is being built next.
 
 ## How it works
 
@@ -43,6 +43,14 @@ The links point into your clone, so editing a skill or running `git pull` takes 
 
 **Make it yours:** fork the repo, then edit `practices.md` and the skills to fit how you work.
 
+## Start a project
+
+```sh
+uvx copier copy gh:<owner>/basecamp my-project
+```
+
+It asks for the project's name, a one-line description, its language (Python or Rust), and the GitHub owner whose BaseCamp repo hosts the CI workflow. To pick up later template changes, run `uvx copier update` in the project; its README says how.
+
 ## What's here
 
 | Path | What it is |
@@ -51,8 +59,9 @@ The links point into your clone, so editing a skill or running `git pull` takes 
 | [`skills/`](skills/) | The loop's Claude Code skills: `/agent-brief`, `/implementation-loop`, `/pr-review`, plus the vendored `/grill-me`. |
 | [`docs/`](docs/) | Why things are the way they are: the loop, the practices, and what gets recorded for retrospectives. |
 | [`install`](install) | Sets up a machine: links the skills and practices, checks for tools. |
+| [`template/`](template/) | The [Copier](https://copier.readthedocs.io/) project template, configured by [`copier.yml`](copier.yml): a language-neutral core plus a Python or Rust layer. `just test` generates one project of each and checks them. |
 
-Coming next: `template/` (a [Copier](https://copier.readthedocs.io/) template with Python and Rust layers) and reusable CI workflows.
+Coming next: reusable CI workflows.
 
 ## License
 
