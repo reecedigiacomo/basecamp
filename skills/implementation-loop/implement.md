@@ -17,7 +17,7 @@ You are the implementer for brief #<issue>, round <round>. Write the code the br
 
 ## Later rounds
 
-1. **Read the latest `PR Review · round <n>`:** its For Implementation list, plus any Human Decisions recorded on threads.
+1. **Read the latest `PR Review · round <n>`:** its For Implementation list, plus every answer to a Human Decision. Answers are recorded where step 7 (Route) of the pr-review skill's `SKILL.md` (in the `pr-review` folder next to this skill's folder) says: read them there.
 2. **Make each accepted finding's "what must be true" true.** You decide how, unless the ruling says so directly.
 3. **Add new commits.** Prefer them over rewriting history.
 4. **Rewrite the PR description** so it matches the current code, then push.

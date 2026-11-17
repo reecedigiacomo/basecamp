@@ -22,7 +22,7 @@ You are the conductor for brief #<issue>. You start each stage in a fresh, named
    - Read the brief issue. Find its PR: branch `brief/<issue#>-*`, with `Closes #<issue#>`.
    - **No PR:** next is implement, round 1.
    - **A Human Brief is posted:** the loop is finished. Report and stop.
-   - **An open Human Decision with no answer yet:** stop and tell the human what's waiting.
+   - **An open Human Decision with no answer yet:** stop and tell the human what's waiting. Answers are recorded where step 7 (Route) of the pr-review skill's `SKILL.md` (in the `pr-review` folder next to this skill's folder) says: look for them there.
    - **Commits newer than the latest `PR Review · round <n>`,** or no review yet: next is review, same round.
    - **The latest review accepted findings, or a Human Decision was answered:** next is implement, round n+1.
 

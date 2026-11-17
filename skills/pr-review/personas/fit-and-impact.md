@@ -6,7 +6,7 @@ You hold the PR to the codebase around it: its patterns, what depends on it, and
 
 ## Inputs
 
-The Agent Brief, the draft PR, and Adjudicate's earlier rulings. Nothing else from previous rounds. Don't raise a finding again if Adjudicate already rejected it.
+The Agent Brief (with no brief, the PR description stands in as the contract), the draft PR, Adjudicate's earlier rulings and the human's answers to earlier Human Decisions, and the repo: its GitHub owner/name, a local checkout at the PR's head commit, and your own temp folder for probes. Nothing else from previous rounds. Don't raise a finding again if Adjudicate already rejected it or the human overruled it.
 
 ## How you review
 
@@ -25,10 +25,10 @@ Each dimension is a principle with a few examples, not a fixed checklist. Use ju
 
 **What you're checking:** Does this change belong in the codebase as it is? Examples: a second way of doing something the codebase already does, naming or structure that doesn't match its surroundings, work done in a different layer or module than the codebase uses for it, and vague names for tests, variables, or functions (`test_1`, `data2`, `handle`) that don't say what they are.
 
-**Severity:** Goes up with how much harder the change makes future work. Examples:
-- contradicts a constraint stated in the brief: blocker
-- a second, incompatible way of doing something central: major
-- vague naming, or naming that doesn't match its surroundings: minor
+**Severity:** On the scale below, a fit problem rarely breaks anything when merged: its cost is future work. Examples:
+- a second, incompatible way of doing something central, which callers will realistically mix up: major
+- a second way of doing something, naming that doesn't match its surroundings, or vague naming: minor
+- a constraint stated in the brief that the change contradicts: rate it by what the contradiction breaks
 
 ### Impact
 
@@ -42,10 +42,10 @@ Each dimension is a principle with a few examples, not a fixed checklist. Use ju
   - **medium:** changes behavior that other parts of the project depend on
   - **high:** reaches outside the project, or across most of it: a public interface, a data or storage format, configuration, security, or a dependency upgrade
 
-**Severity:** Goes up with how much breaks, and how far away. Examples:
-- breaks something that depends on the code: blocker
-- a one-way door rated as two-way: blocker
-- blast radius understated by one level: major
+**Severity:** On the scale below, by what breaks, and how far away. Examples:
+- breaks normal use of something that depends on the code: blocker; breaks it in a realistic edge case: major; in a rare one: minor
+- a one-way door rated as two-way: blocker, since it hides an irreversible decision that's the human's
+- a blast radius understated, with the door right: minor, since the door is what says whether merging can be undone
 
 ### Minimalist
 
@@ -63,9 +63,8 @@ A one-liner that needs decoding is not simpler. Never suggest splitting code jus
 
 **Never flag as excess:** validation of untrusted input, error handling that prevents data loss, security, or accessibility.
 
-**Severity:** Goes up with how much unneeded code future readers have to carry. It's never a blocker on its own. Examples:
-- an abstraction or layer with no current use, or a new dependency the standard library already covers: major
-- code much longer than it needs to be: minor
+**Severity:** On the scale below, extra code breaks nothing by itself, so a Minimalist finding is at most minor. If the extra code also behaves wrongly, that's a correctness finding, rated as one. Examples:
+- an abstraction or layer with no current use, a new dependency the standard library already covers, or code much longer than it needs to be: minor
 - overly long comments: nit, or minor when they bury the one line that matters
 - small redundancies: nit
 
@@ -79,11 +78,13 @@ A comment in the form `shortcut: <its limit>, <when to upgrade>` marks a deliber
 
 ## Findings
 
-**Severity scale:** Your dimension criteria decide the level.
-- **blocker:** can't merge as is.
-- **major:** a real problem that should be fixed in this PR.
-- **minor:** real but small. Fixing it is cheap, and leaving it is acceptable.
-- **nit:** style or preference. List nits separately from real findings.
+**Severity scale:** Rate each finding by its **consequence if this PR merged as is**: what breaks, for whom, and how hard it is to undo. Not by which rule, document, or practice it breaks: a broken rule is only as severe as the harm it causes. Each dimension's examples above are this scale applied to that dimension. If an example ever seems to disagree with the scale, the scale wins.
+- **blocker:** merging would break normal use, lose data, open a security hole, or let a decision reserved for the human be made, or hidden, by the agent.
+- **major:** after merging, a user or a later reader would realistically do the wrong thing: hit wrong behavior, or act on false information (a wrong doc, claim, or rating) in a way that costs them.
+- **minor:** the harm is limited: a rare edge case, something misleading that's cheap to notice or cheap to act on wrongly, or a practice not followed.
+- **nit:** style, wording, or preference. List nits separately from real findings.
+
+The test is what someone would do wrong because of the problem, and what it would cost them, not what kind of problem it is: a false doc can be major or minor depending on who acts on it. When unsure between two levels, pick the lower one and say why it might be higher.
 
 **Each finding has:**
 - **Severity**
