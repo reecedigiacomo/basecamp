@@ -28,9 +28,12 @@ Read `~/.claude/basecamp/practices.md`, all of it.
    | Correctness & Safety | `personas/correctness-and-safety.md` |
    | Fit & Impact | `personas/fit-and-impact.md` |
 
+   First set up **the repo** for them: a local checkout at the PR's head commit (`git fetch origin pull/<PR#>/head` then `git worktree add --detach <path> FETCH_HEAD`), and a separate, empty temp folder for each reviewer's probes (`mktemp -d`). Remove them once you've routed (step 7).
+
    Give each one:
    - the full text of its persona file
-   - the repo, the PR number, the brief issue number (or "no brief: the PR description is the stand-in contract"), and the earlier rulings tables, copied exactly
+   - the repo: the GitHub owner/name, the local checkout path, and that reviewer's own temp folder
+   - the PR number, the brief issue number (or "no brief: the PR description is the stand-in contract"), and the earlier rulings tables, copied exactly
 
    Add nothing else: no hints, no summary of the PR, no opinion. Each returns its findings to you as its result. Wait for all three before moving on.
 
@@ -64,7 +67,7 @@ Read `~/.claude/basecamp/practices.md`, all of it.
 7. **Route.**
    - **Accepted, nothing escalated:** done for this round.
    - **Escalated:** stay open. The human may attach to talk it through. When they decide, record the decision on its thread.
-   - **Neither:** start the Human Brief subagent with the full text of `human-brief.md` from this skill's folder, plus the repo, the PR number, and the brief issue number (or "no brief"). Add nothing else.
+   - **Neither:** start the Human Brief subagent with the full text of `human-brief.md` from this skill's folder, plus the repo (the GitHub owner/name and the local checkout path), the PR number, and the brief issue number (or "no brief"). Add nothing else.
 
 8. **Report** one line:
    - `review r<n>: <a> accepted, <e> escalated · PR #<PR>`
