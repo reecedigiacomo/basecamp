@@ -16,9 +16,10 @@ language:
     - rust
 
 # A name is refused when the generated project couldn't import or build itself:
-# for Python, a keyword, a standard-library module (3.12 to 3.14), or a package
-# the project depends on (pytest and its dependencies, ruff, uv_build); for Rust,
-# std. Compared as the Python package name, with `-` turned into `_`.
+# for Python, a keyword, a standard-library module (3.12 to 3.14), or a module
+# the dev dependencies install (a snapshot of what pytest, ruff and uv_build
+# install today); for Rust, std. Compared as the Python package name, with `-`
+# turned into `_`.
 project_name:
   type: str
   help: Project name (lowercase letters, digits and hyphens, starting with a letter)
@@ -27,7 +28,7 @@ project_name:
     {% set python_taken = 'and as assert async await break class continue def del
     elif else except finally for from global if import in is lambda nonlocal not
     or pass raise return try while with yield
-    pytest ruff uv_build iniconfig pluggy packaging pygments colorama exceptiongroup tomli
+    pytest py ruff uv_build iniconfig pluggy packaging pygments colorama exceptiongroup tomli
     abc aifc annotationlib antigravity argparse array ast asyncio atexit audioop
     base64 bdb binascii bisect builtins bz2 calendar cgi cgitb chunk cmath cmd code
     codecs codeop collections colorsys compileall compression concurrent

@@ -55,6 +55,7 @@ refuse() { # refuse <language> <project_name>
 refuse python class
 refuse python json
 refuse python pytest
+refuse python py
 refuse rust std
 
 echo "== force-push hook"
