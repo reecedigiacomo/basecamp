@@ -23,7 +23,7 @@ Prefer adding new commits over rewriting existing ones. You may rewrite history 
 
 ### Authorship
 
-Commits made by the Implementation agent in the Implementation Loop end with a Claude co-author line. Every other commit has the human as its only author.
+Commits made by an agent session acting as the implementer end with a Claude co-author line, whether the conductor started that session or the human routed the work to it by hand, and whether or not the work has a brief. Every other commit, including ones from the human's own sessions, has the human as its only author.
 
 ## Branches and merging
 
