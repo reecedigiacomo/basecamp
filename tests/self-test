@@ -1,0 +1,65 @@
+#!/bin/sh
+# Template self-test: generates a Python and a Rust project from the working tree
+# (uncommitted changes included) into a temp folder and runs `just check` in each.
+# Never skips a language: a missing tool fails.
+set -eu
+
+repo=$(cd "$(dirname "$0")/.." && pwd)
+
+for tool in uv cargo just git; do
+  if ! command -v "$tool" >/dev/null 2>&1; then
+    echo "self-test: '$tool' is not on PATH. Install it, or add it to PATH, then rerun." >&2
+    exit 1
+  fi
+done
+
+work=$(mktemp -d "${TMPDIR:-/tmp}/basecamp-self-test.XXXXXX")
+trap 'rm -r -f "$work"' EXIT
+# An interrupt stops the run with a failing status; exiting runs the cleanup above.
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+failures=0
+fail() {
+  echo "FAIL: $1" >&2
+  failures=$((failures + 1))
+}
+
+generate() { # generate <language> <dest> [project_name]
+  # --vcs-ref=HEAD makes Copier include uncommitted changes in the working tree.
+  uvx copier copy --quiet --trust --defaults --vcs-ref=HEAD \
+    --data "project_name=${3:-sample-parser}" \
+    --data "description=A sample parser" \
+    --data "language=$1" \
+    --data github_owner=octocat \
+    "$repo" "$2"
+}
+
+for language in python rust; do
+  echo "== $language"
+  generate "$language" "$work/$language"
+  (cd "$work/$language" && just check) || fail "just check in the generated $language project"
+done
+
+grep -q cargo "$work/python/justfile" && fail "the Python justfile mentions cargo"
+grep -q uv "$work/rust/justfile" && fail "the Rust justfile mentions uv"
+
+echo "== project names that would break the project"
+refuse() { # refuse <language> <project_name>
+  if generate "$1" "$work/refused-$1-$2" "$2" >/dev/null 2>&1; then
+    fail "copier accepted project_name=$2 for $1"
+  else
+    echo "ok   refused $1: $2"
+  fi
+}
+refuse python class
+refuse python json
+refuse python pytest
+refuse python py
+refuse rust std
+
+if [ "$failures" -gt 0 ]; then
+  echo "self-test: $failures failure(s)" >&2
+  exit 1
+fi
+echo "self-test: all checks passed"

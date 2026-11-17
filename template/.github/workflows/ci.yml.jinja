@@ -1,0 +1,13 @@
+name: CI
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    uses: {{ github_owner }}/basecamp/.github/workflows/check.yml@v1
+    with:
+      language: {{ language }}

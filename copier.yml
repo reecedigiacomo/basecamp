@@ -1,0 +1,84 @@
+# Copier template for a new BaseCamp project. The template files live in template/.
+_subdirectory: template
+_min_copier_version: "9.0.0"
+
+# README.md is the project's own from the first commit on. Every other file,
+# CLAUDE.md included, updates through Copier's normal 3-way merge.
+_skip_if_exists:
+  - README.md
+
+# Asked first, so project_name can be checked against the chosen language.
+language:
+  type: str
+  help: Language (one per project)
+  choices:
+    - python
+    - rust
+
+# A name is refused when the generated project couldn't import or build itself:
+# for Python, a keyword, a standard-library module (3.12 to 3.14), or a module
+# the dev dependencies install (a snapshot of what pytest, ruff and uv_build
+# install today); for Rust, std. Compared as the Python package name, with `-`
+# turned into `_`.
+project_name:
+  type: str
+  help: Project name (lowercase letters, digits and hyphens, starting with a letter)
+  validator: >-
+    {% set package = project_name | replace('-', '_') %}
+    {% set python_taken = 'and as assert async await break class continue def del
+    elif else except finally for from global if import in is lambda nonlocal not
+    or pass raise return try while with yield
+    pytest py ruff uv_build iniconfig pluggy packaging pygments colorama exceptiongroup tomli
+    abc aifc annotationlib antigravity argparse array ast asyncio atexit audioop
+    base64 bdb binascii bisect builtins bz2 calendar cgi cgitb chunk cmath cmd code
+    codecs codeop collections colorsys compileall compression concurrent
+    configparser contextlib contextvars copy copyreg crypt csv ctypes curses
+    dataclasses datetime dbm decimal difflib dis doctest email encodings ensurepip
+    enum errno faulthandler fcntl filecmp fileinput fnmatch fractions ftplib
+    functools gc genericpath getopt getpass gettext glob graphlib grp gzip hashlib
+    heapq hmac html http idlelib imaplib imghdr importlib inspect io ipaddress
+    itertools json keyword lib2to3 linecache locale logging lzma mailbox mailcap
+    marshal math mimetypes mmap modulefinder msilib msvcrt multiprocessing netrc
+    nis nntplib nt ntpath nturl2path numbers opcode operator optparse os
+    ossaudiodev pathlib pdb pickle pickletools pipes pkgutil platform plistlib
+    poplib posix posixpath pprint profile pstats pty pwd py_compile pyclbr pydoc
+    pydoc_data pyexpat queue quopri random re readline reprlib resource rlcompleter
+    runpy sched secrets select selectors shelve shlex shutil signal site smtplib
+    sndhdr socket socketserver spwd sqlite3 sre_compile sre_constants sre_parse ssl
+    stat statistics string stringprep struct subprocess sunau symtable sys
+    sysconfig syslog tabnanny tarfile telnetlib tempfile termios textwrap this
+    threading time timeit tkinter token tokenize tomllib trace traceback
+    tracemalloc tty turtle turtledemo types typing unicodedata unittest urllib uu
+    uuid venv warnings wave weakref webbrowser winreg winsound wsgiref xdrlib xml
+    xmlrpc zipapp zipfile zipimport zlib zoneinfo'.split() %}
+    {% if not (project_name | regex_search('^[a-z][a-z0-9-]*$')) or project_name.endswith('-') %}
+    Use lowercase letters, digits and hyphens, starting with a letter and not ending with a hyphen.
+    {% elif language == 'python' and package in python_taken %}
+    '{{ package }}' is a Python keyword, a standard-library module, or one of the project's own dependencies, so the package couldn't be imported. Pick another name.
+    {% elif language == 'rust' and package == 'std' %}
+    'std' is Rust's standard library, so the crate wouldn't build. Pick another name.
+    {% endif %}
+
+description:
+  type: str
+  help: One-line description
+  validator: >-
+    {% if not description.strip() %}
+    Give a one-line description.
+    {% elif '\n' in description %}
+    Keep the description to one line.
+    {% endif %}
+
+github_owner:
+  type: str
+  help: GitHub owner whose BaseCamp repo hosts the central CI workflow
+  validator: >-
+    {% if not (github_owner | regex_search('^[A-Za-z0-9]([A-Za-z0-9-]{0,37}[A-Za-z0-9])?$')) %}
+    Give the GitHub user or organization that owns the BaseCamp repo, such as octocat.
+    {% endif %}
+
+# Derived, never asked or recorded.
+package_name:
+  type: str
+  when: false
+  default: "{{ project_name | replace('-', '_') }}"
