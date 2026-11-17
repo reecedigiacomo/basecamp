@@ -25,6 +25,8 @@ Prefer adding new commits over rewriting existing ones. You may rewrite history 
 
 Commits made by an agent session acting as the implementer end with a Claude co-author line, whether the conductor started that session or the human routed the work to it by hand, and whether or not the work has a brief. Every other commit, including ones from the human's own sessions, has the human as its only author.
 
+PR descriptions carry no attribution footer, such as "Generated with Claude Code". Squash-merge copies the description into the commit on `main`.
+
 ## Branches and merging
 
 - **Never merge to `main`.** Only the human merges, unless they explicitly give you permission.
