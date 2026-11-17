@@ -1,7 +1,6 @@
 ---
 name: pr-review
 description: Review a PR with three independent reviewer subagents, adjudicate their findings, and post one review. Writes the Human Brief when nothing is left to fix.
-disable-model-invocation: true
 argument-hint: "<PR#> [--report-to <results file>]"
 ---
 
