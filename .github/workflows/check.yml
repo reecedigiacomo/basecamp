@@ -1,0 +1,48 @@
+# Reusable check for BaseCamp projects: installs `just` and one language's tools,
+# then runs the project's `just check`. Generated projects call it from their ci.yml.
+name: Check
+
+on:
+  workflow_call:
+    inputs:
+      language:
+        description: "The project's language: python or rust."
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Reject an unknown language
+        if: inputs.language != 'python' && inputs.language != 'rust'
+        env:
+          LANGUAGE: ${{ inputs.language }}
+        run: |
+          echo "::error::language must be python or rust, got '$LANGUAGE'"
+          exit 1
+
+      - uses: actions/checkout@v4
+
+      - name: Install just
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://just.systems/install.sh | bash -s -- --to "$HOME/.local/bin"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Install uv
+        if: inputs.language == 'python'
+        run: |
+          curl -LsSf https://astral.sh/uv/install.sh | sh
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Install Rust
+        if: inputs.language == 'rust'
+        run: |
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain stable --component rustfmt,clippy
+          echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+
+      - name: just check
+        run: just check
