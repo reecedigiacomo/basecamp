@@ -29,7 +29,7 @@ You are the conductor for brief #<issue>. You start each stage in a fresh, named
 2. **Prepare the worktree.** Make sure `.claude/worktrees/<issue#>` exists on branch `brief/<issue#>-<slug>`, created from `main` if it doesn't. Every stage session runs there.
 
 3. **Start the stage** as a background session in the worktree, in `auto` permission mode, named `<repo> #<issue#> · <stage> · r<round>`:
-   - **implement:** tell it to read and follow `~/.claude/skills/implementation-loop/implement.md` for issue #<issue#>, round <round>, reporting to the results file.
+   - **implement:** tell it to read and follow `implement.md` from this skill's own folder (give it the full path) for issue #<issue#>, round <round>, reporting to the results file.
    - **review:** `/pr-review <PR#> --report-to <results file>`.
 
 4. **Wait for its line in the results file.** While waiting, check the session's state in `claude agents --json`. If it shows it's waiting for input, tell the human:

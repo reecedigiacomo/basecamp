@@ -1,0 +1,393 @@
+#!/usr/bin/env bash
+# Set up this machine for BaseCamp: link its skills and practices.md into ~/.claude,
+# and check for the tools it needs. Shows a plan first. Asks before linking a new
+# skill (unless you named it with --skills), replacing anything, or installing a tool.
+# practices.md is linked without asking: the BaseCamp skills read it.
+# Safe to rerun: anything already in place is left alone.
+set -euo pipefail
+
+physical() {  # physical <path>: the real path with every link resolved, or empty if it doesn't exist
+  # Every step uses cd -P, so ".." inside a link target is resolved physically, not textually.
+  local p="$1" target dir hops=0
+  while [ -L "$p" ] && [ "$hops" -lt 40 ]; do
+    target="$(readlink "$p")"
+    case "$target" in
+      /*) p="$target" ;;
+      *) dir="$(cd -P "$(dirname "$p")" 2>/dev/null && pwd -P)" || return 0
+         p="$dir/$target" ;;
+    esac
+    hops=$((hops + 1))
+  done
+  if [ -d "$p" ]; then
+    (cd -P "$p" && pwd -P)
+  elif [ -e "$p" ]; then
+    dir="$(cd -P "$(dirname "$p")" && pwd -P)" && echo "$dir/$(basename "$p")"
+  fi
+}
+
+# Resolve the script itself first, so running it through a link still finds the clone.
+REPO="$(dirname "$(physical "${BASH_SOURCE[0]}")")"
+SKILLS_DIR="$HOME/.claude/skills"
+BASECAMP_DIR="$HOME/.claude/basecamp"
+BACKUP_DIR="$BASECAMP_DIR/backup"
+ALL_SKILLS="agent-brief implementation-loop pr-review grill-me grilling"
+ALL_TOOLS="copier just rustup gh"
+DRY_RUN=0
+SKILLS_SEL=""   # empty: ask about each new skill
+TOOLS_SEL=""    # empty: ask about each missing tool
+
+usage() {
+  cat <<'EOF'
+Usage: ./install [options]
+
+  --dry-run             Show the plan and change nothing.
+  --skills <list|none>  Link only these skills (comma-separated), without asking, or none.
+  --tools <list|none>   Offer only these missing tools (comma-separated), or none.
+  --skills-dir <path>   Where to link skills (default: ~/.claude/skills).
+  -h, --help            Show this help.
+
+Skills: agent-brief, implementation-loop, pr-review, grill-me, grilling
+Tools:  copier, just, rustup, gh
+
+practices.md is always linked at ~/.claude/basecamp/practices.md: the BaseCamp skills read it.
+The links point into this clone, so keep it where it is. After moving it, rerun ./install:
+broken links are repaired by default.
+EOF
+}
+
+name_list() {  # name_list <flag> <value>: the comma-separated list with all spacing removed
+  local list
+  list="$(printf '%s' "$2" | tr -d '[:space:]' | tr -s ',' | sed 's/^,//; s/,$//')"
+  if [ -z "$list" ]; then echo "$1 needs at least one name, or none" >&2; exit 2; fi
+  echo "$list"
+}
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --dry-run) DRY_RUN=1 ;;
+    --skills) SKILLS_SEL="$(name_list --skills "${2-}")"; shift ;;
+    --tools) TOOLS_SEL="$(name_list --tools "${2-}")"; shift ;;
+    --skills-dir) SKILLS_DIR="${2:?--skills-dir needs a path}"; shift ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
+  esac
+  shift
+done
+
+check_names() {  # check_names <flag> <comma-separated list> <allowed, space-separated>
+  local name
+  [ -z "$2" ] || [ "$2" = none ] && return 0
+  for name in $(echo "$2" | tr ',' ' '); do
+    case " $3 " in
+      *" $name "*) ;;
+      *) echo "Unknown name in $1: $name" >&2; usage >&2; exit 2 ;;
+    esac
+  done
+}
+check_names --skills "$SKILLS_SEL" "$ALL_SKILLS"
+check_names --tools "$TOOLS_SEL" "$ALL_TOOLS"
+
+skill_src() {
+  case "$1" in
+    grill-me|grilling) echo "$REPO/skills/third-party/mattpocock/$1" ;;
+    *) echo "$REPO/skills/$1" ;;
+  esac
+}
+
+skill_needs() {
+  case "$1" in
+    implementation-loop) echo "pr-review" ;;
+    agent-brief) echo "grill-me grilling" ;;
+    grill-me) echo "grilling" ;;
+  esac
+}
+
+tool_install_cmd() {
+  case "$1" in
+    copier) echo "uv tool install copier" ;;
+    just) echo "brew install just" ;;
+    rustup) echo 'brew install rustup && "$(brew --prefix)/opt/rustup/bin/rustup" default stable' ;;
+    gh) echo "brew install gh" ;;
+  esac
+}
+
+keg_rustup() {  # Homebrew's rustup is keg-only, so it's off PATH. Prints its path if it's installed.
+  local p
+  command -v brew >/dev/null 2>&1 || return 0
+  # Homebrew's own prefix, not "brew --prefix rustup", which can fetch formula data and is slow.
+  p="$(brew --prefix 2>/dev/null || true)/opt/rustup/bin/rustup"
+  if [ -x "$p" ]; then echo "$p"; fi
+}
+
+rustup_bin() {  # the rustup to use: the one on PATH, else Homebrew's keg-only one
+  command -v rustup 2>/dev/null || keg_rustup
+}
+
+rustup_path_line() {  # the one PATH line to suggest for Homebrew's rustup
+  echo "export PATH=\"$(dirname "$(keg_rustup)"):\$PATH\""
+}
+
+# installed, keg (rustup installed off PATH), no-toolchain (rustup without a toolchain), or missing
+tool_state() {
+  local bin
+  if [ "$1" = rustup ] && bin="$(rustup_bin)" && [ -n "$bin" ]; then
+    if "$bin" toolchain list 2>/dev/null | grep -q 'no installed toolchains'; then
+      echo no-toolchain
+    elif command -v rustup >/dev/null 2>&1; then
+      echo installed
+    else
+      echo keg
+    fi
+  elif command -v "$1" >/dev/null 2>&1; then
+    echo installed
+  else
+    echo missing
+  fi
+}
+
+tool_needs() {  # the installer a tool's command relies on
+  case "$1" in
+    copier) echo "uv" ;;
+    *) echo "brew" ;;
+  esac
+}
+
+inside_repo() {  # inside_repo <path>: true if <path> resolves into this repo, or would once created
+  local p="$1" rest=""
+  # Resolve the nearest part that exists, so nothing has to be created to check.
+  while [ ! -e "$p" ] && [ ! -L "$p" ]; do
+    rest="/$(basename "$p")$rest"
+    p="$(dirname "$p")"
+  done
+  case "$(physical "$p")$rest/" in
+    "$REPO"/*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+# ok: already resolves to the source. missing: nothing there. broken: a link to something that no
+# longer exists (for example, after the clone moved). other-link: a link to somewhere else.
+# exists: a real file or folder in the way. in-repo: its folder resolves into this repo, so it's
+# never linked or replaced. dead-folder: its folder is a link to nothing, so nothing can go there.
+link_state() {
+  local dest="$1" src="$2"
+  if [ -e "$dest" ] && [ "$(physical "$dest")" = "$(physical "$src")" ]; then
+    echo ok
+  elif [ -L "$(dirname "$dest")" ] && [ ! -e "$(dirname "$dest")" ]; then
+    echo dead-folder
+  elif inside_repo "$(dirname "$dest")"; then
+    echo in-repo
+  elif [ -L "$dest" ] && [ ! -e "$dest" ]; then
+    echo broken
+  elif [ -L "$dest" ]; then
+    echo other-link
+  elif [ -e "$dest" ]; then
+    echo exists
+  else
+    echo missing
+  fi
+}
+
+in_list() {  # in_list <item> <comma-separated list>
+  case ",$2," in *",$1,"*) return 0 ;; *) return 1 ;; esac
+}
+
+ask() {  # ask <question> <default y|n>
+  local prompt ans
+  if [ "$2" = y ]; then prompt="[Y/n]"; else prompt="[y/N]"; fi
+  printf '%s %s ' "$1" "$prompt"
+  if ! read -r ans; then ans=""; echo; fi
+  [ -z "$ans" ] && ans="$2"
+  case "$ans" in y|Y|yes|Yes) return 0 ;; *) return 1 ;; esac
+}
+
+describe() {  # describe <state> <dest>
+  case "$1" in
+    ok) echo "linked" ;;
+    missing) echo "not linked" ;;
+    broken) echo "broken link ($(readlink "$2") is gone): will repair" ;;
+    dead-folder) echo "can't link: $(dirname "$2") is a link to $(readlink "$(dirname "$2")"), which is gone" ;;
+    other-link) echo "links elsewhere ($(readlink "$2")): needs your OK to replace" ;;
+    exists) echo "a real file or folder is in the way: needs your OK to replace" ;;
+    in-repo) echo "can't link: its folder resolves into this repo" ;;
+  esac
+}
+
+backup_and_link() {  # backup_and_link <src> <dest>
+  local src="$1" dest="$2"
+  if inside_repo "$(dirname "$dest")"; then
+    echo "  refusing to link $dest: its folder resolves into this repo."
+    return 0
+  fi
+  if [ ! -e "$src" ]; then
+    echo "  can't link $dest: $src doesn't exist."
+    return 0
+  fi
+  if ! mkdir -p "$(dirname "$dest")" 2>/dev/null; then
+    echo "  can't link $dest: couldn't create $(dirname "$dest")."
+    return 0
+  fi
+  if [ -e "$dest" ] || [ -L "$dest" ]; then
+    # Only the link or folder at $dest moves, never what a link points to.
+    if inside_repo "$BACKUP_DIR"; then
+      echo "  refusing to replace $dest: the backup folder $BACKUP_DIR resolves into this repo."
+      return 0
+    fi
+    if ! mkdir -p "$BACKUP_DIR" 2>/dev/null; then
+      echo "  can't replace $dest: couldn't create $BACKUP_DIR."
+      return 0
+    fi
+    local saved
+    saved="$BACKUP_DIR/$(basename "$dest").$(date +%Y%m%d-%H%M%S)"
+    mv "$dest" "$saved"
+    echo "  moved the old one to $saved"
+  fi
+  ln -s "$src" "$dest"
+  echo "  linked $dest"
+}
+
+# ---- Plan ----
+
+PRACTICES_SRC="$REPO/practices.md"
+PRACTICES_DEST="$BASECAMP_DIR/practices.md"
+PRACTICES_STATE="$(link_state "$PRACTICES_DEST" "$PRACTICES_SRC")"
+
+echo "BaseCamp install plan"
+echo
+echo "Practices (always linked):"
+printf '  %-22s %s\n' "practices.md" "$(describe "$PRACTICES_STATE" "$PRACTICES_DEST")"
+echo
+echo "Skills (into $SKILLS_DIR):"
+for s in $ALL_SKILLS; do
+  printf '  %-22s %s\n' "$s" "$(describe "$(link_state "$SKILLS_DIR/$s" "$(skill_src "$s")")" "$SKILLS_DIR/$s")"
+done
+echo
+echo "Tools:"
+for t in $ALL_TOOLS; do
+  case "$(tool_state "$t")" in
+    installed) printf '  %-22s %s\n' "$t" "installed" ;;
+    keg) printf '  %-22s %s\n' "$t" "installed, not on your PATH: add $(rustup_path_line)" ;;
+    no-toolchain) printf '  %-22s %s\n' "$t" "installed, no toolchain yet: $(rustup_bin) default stable" ;;
+    missing) printf '  %-22s %s\n' "$t" "missing: $(tool_install_cmd "$t")" ;;
+  esac
+done
+echo
+
+if [ "$DRY_RUN" = 1 ]; then
+  echo "Dry run: nothing changed."
+  exit 0
+fi
+
+# ---- Apply ----
+
+# Practices: always linked. Ask only if something is in the way.
+case "$PRACTICES_STATE" in
+  ok|in-repo|dead-folder) ;;
+  missing) backup_and_link "$PRACTICES_SRC" "$PRACTICES_DEST" ;;
+  broken)
+    if ask "practices.md: $(describe "$PRACTICES_STATE" "$PRACTICES_DEST"). Repair it?" y; then
+      backup_and_link "$PRACTICES_SRC" "$PRACTICES_DEST"
+    fi
+    ;;
+  *)
+    if ask "practices.md: $(describe "$PRACTICES_STATE" "$PRACTICES_DEST"). Replace it?" n; then
+      backup_and_link "$PRACTICES_SRC" "$PRACTICES_DEST"
+    else
+      echo "  left practices.md as is. The skills read it from $PRACTICES_DEST."
+    fi
+    ;;
+esac
+
+# Skills: decide which to link, offer missing dependencies, then link.
+CHOSEN=""
+for s in $ALL_SKILLS; do
+  state="$(link_state "$SKILLS_DIR/$s" "$(skill_src "$s")")"
+  case "$state" in ok|in-repo|dead-folder) continue ;; esac
+  if [ "$SKILLS_SEL" = none ]; then continue; fi
+  if [ -n "$SKILLS_SEL" ]; then
+    in_list "$s" "$SKILLS_SEL" || continue
+    CHOSEN="$CHOSEN $s"
+  elif [ "$state" != missing ]; then
+    CHOSEN="$CHOSEN $s"   # something's in the way: the replace question below covers it
+  elif ask "Link skill $s?" y; then
+    CHOSEN="$CHOSEN $s"
+  fi
+done
+
+for s in $CHOSEN; do
+  for need in $(skill_needs "$s"); do
+    case " $CHOSEN " in *" $need "*) continue ;; esac
+    case "$(link_state "$SKILLS_DIR/$need" "$(skill_src "$need")")" in ok|in-repo|dead-folder) continue ;; esac
+    if ask "$s needs $need. Link $need too?" y; then
+      CHOSEN="$CHOSEN $need"
+    fi
+  done
+done
+
+for s in $CHOSEN; do
+  dest="$SKILLS_DIR/$s"
+  src="$(skill_src "$s")"
+  state="$(link_state "$dest" "$src")"
+  case "$state" in
+    ok) ;;
+    missing) backup_and_link "$src" "$dest" ;;
+    broken)
+      if ask "$s: $(describe "$state" "$dest"). Repair it?" y; then
+        backup_and_link "$src" "$dest"
+      else
+        echo "  left $s as is."
+      fi
+      ;;
+    *)
+      if ask "$s: $(describe "$state" "$dest"). Replace it?" n; then
+        backup_and_link "$src" "$dest"
+      else
+        echo "  left $s as is."
+      fi
+      ;;
+  esac
+done
+
+# Warn about any linked skill whose dependency didn't end up linked.
+for s in $ALL_SKILLS; do
+  [ "$(link_state "$SKILLS_DIR/$s" "$(skill_src "$s")")" = ok ] || continue
+  for need in $(skill_needs "$s"); do
+    if [ "$(link_state "$SKILLS_DIR/$need" "$(skill_src "$need")")" != ok ]; then
+      echo "  warning: $s won't work fully until BaseCamp's $need is linked."
+    fi
+  done
+done
+
+# Tools: ask before installing each missing one. Never run anything piped from the internet.
+# A failed install is reported, and the rest of the run carries on.
+for t in $ALL_TOOLS; do
+  state="$(tool_state "$t")"
+  case "$state" in missing|no-toolchain) ;; *) continue ;; esac
+  if [ "$TOOLS_SEL" = none ]; then continue; fi
+  if [ -n "$TOOLS_SEL" ] && ! in_list "$t" "$TOOLS_SEL"; then continue; fi
+  if [ "$state" = no-toolchain ]; then
+    if ask "Set up rustup's stable toolchain with: $(rustup_bin) default stable?" n; then
+      "$(rustup_bin)" default stable || echo "  rustup: toolchain setup failed. Run it yourself: $(rustup_bin) default stable"
+    fi
+    continue
+  fi
+  cmd="$(tool_install_cmd "$t")"
+  needs="$(tool_needs "$t")"
+  if [ "$(uname)" != Darwin ] || ! command -v "$needs" >/dev/null 2>&1; then
+    echo "  $t: install it yourself ($cmd needs $needs on macOS)."
+    continue
+  fi
+  if ask "Install $t with: $cmd?" n; then
+    if sh -c "$cmd"; then
+      if [ "$t" = rustup ]; then
+        echo "  rustup is installed but not on your PATH (Homebrew keeps it separate)."
+        echo "  Add this to your shell profile: $(rustup_path_line)"
+      fi
+    else
+      echo "  $t: install failed. Run it yourself: $cmd"
+    fi
+  fi
+done
+
+echo
+echo "Done. Rerun ./install anytime; anything already in place is left alone."
