@@ -14,7 +14,7 @@ From nothing to a repo ready for the Implementation Loop. The GitHub settings ar
 
 ## 2. Create the GitHub repo and push
 
-Make the repo public. On a free personal account, a private repo doesn't enforce rulesets (step 4) and doesn't offer secret scanning or push protection (step 6); those need a paid plan.
+Pick the repo's visibility first: steps 4 and 6 need a public repo or a paid plan. On a free personal account or a Free organization, a private repo doesn't enforce rulesets (step 4) and doesn't offer secret scanning or push protection (step 6).
 
 - [ ] On GitHub, create an empty repo (no README, license, or `.gitignore`), named after the project.
 - [ ] Copier doesn't make a git repo, so make one, commit, and push to `main`, using the repo's URL:
