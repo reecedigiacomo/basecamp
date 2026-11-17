@@ -74,9 +74,32 @@ expect block 'cd sub && git -C . push --force origin brief/12-parser'
 expect allow 'git push --force-with-lease origin brief/12-parser'
 expect allow 'git push'
 expect allow 'git status && git log -5'
+expect block 'git push origin "$branch" --force'
+expect block 'git push origin $(git branch --show-current) -f'
+expect block 'git -c remote.origin.push=+HEAD:refs/heads/main push'
+expect block 'GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=remote.origin.mirror GIT_CONFIG_VALUE_0=true git push'
+expect block 'git -c alias.fp="push --force" fp'
+expect block 'git push --force-with-lease --tags origin brief/12-parser'
 
 if [ "$failures" -gt 0 ]; then
+expect allow 'git push -u origin brief/12-parser'
   echo "self-test: $failures failure(s)" >&2
   exit 1
+# Without jq, only commands that mention push are blocked.
+no_jq="$work/no-jq-bin"
+mkdir "$no_jq"
+ln -s "$(command -v cat)" "$no_jq/cat"
+expect_no_jq() { # expect_no_jq <allow|block> <command>
+  code=0
+  printf '%s' "$2" | jq -Rs '{tool_name: "Bash", tool_input: {command: .}}' \
+    | PATH="$no_jq" /bin/sh "$hook" >/dev/null 2>&1 || code=$?
+  case "$1:$code" in
+    allow:0 | block:2) echo "ok   $1 without jq: $2" ;;
+    *) fail "hook without jq should $1 (exit $code): $2" ;;
+  esac
+}
+expect_no_jq allow 'ls -la'
+expect_no_jq block 'git push origin brief/12-parser'
+
 fi
 echo "self-test: all checks passed"

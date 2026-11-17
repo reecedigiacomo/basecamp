@@ -4,6 +4,8 @@
 #
 # It errs toward blocking: quotes are ignored and any command segment that runs
 # `git ... push` is checked, so a force-push hidden in `sh -c "..."` is caught too.
+# Anything it can't read from the command text (a shell expansion, inline config)
+# blocks the push rather than guessing.
 
 block() {
   echo "Blocked by .claude/hooks/block-force-push: $1" >&2
@@ -11,19 +13,37 @@ block() {
   exit 2
 }
 
-command -v jq >/dev/null 2>&1 || block "jq is required to check git push commands."
-cmd=$(jq -r '.tool_input.command // empty') || block "could not read the hook input."
+input=$(cat) || block "could not read the hook input."
+if ! command -v jq >/dev/null 2>&1; then
+  # Without jq the command can't be parsed, so block anything that could be a push.
+  case $input in
+    *push*) block "jq is required to check commands that mention 'push'." ;;
+    *) exit 0 ;;
+  esac
+fi
+cmd=$(printf '%s' "$input" | jq -r '.tool_input.command // empty') ||
+  block "could not read the hook input."
 [ -n "$cmd" ] || exit 0
+
+# Config given in the environment can force a push or define an alias.
+case $cmd in
+  *GIT_CONFIG*) has_git_config_env=1 ;;
+  *) has_git_config_env="" ;;
+esac
 
 # check_push <args after "push">: blocks unless the push is allowed.
 check_push() {
-  force="" lease="" remote="" refspecs=""
+  force="" lease="" wide="" remote="" refspecs=""
   while [ $# -gt 0 ]; do
     case $1 in
+      *'$'*) block "the push's arguments contain a shell expansion ($1), which can't be checked." ;;
       --force-with-lease | --force-with-lease=*) lease=1 ;;
       --force | --mirror) force="$1" ;;
+      --all | --branches | --tags | --follow-tags) wide="$1" ;;
       --*) ;;
-      -o) shift ;;
+      -o)
+        [ $# -ge 2 ] && shift
+        ;;
       -*f*) force="$1" ;;
       -*) ;;
       +*) force="refspec $1" ;;
@@ -35,6 +55,7 @@ check_push() {
   done
   [ -n "$force" ] && block "force-push ($force)."
   [ -z "$lease" ] && return 0
+  [ -n "$wide" ] && block "--force-with-lease with $wide pushes more than brief/* branches."
   [ -n "$refspecs" ] || block "--force-with-lease must name its remote and a brief/* branch."
   for refspec in $refspecs; do
     dest=${refspec#*:}
@@ -52,9 +73,20 @@ check_segment() {
     case $1 in
       git | */git)
         shift
+        [ -n "$has_git_config_env" ] && block "git run with GIT_CONFIG_* set, which can force a push."
+        inline_config=""
         while [ $# -gt 0 ]; do
           case $1 in
-            -C | -c | --git-dir | --work-tree | --namespace | --exec-path | --config-env)
+            -c | --config-env)
+              inline_config="$inline_config ${2:-}"
+              [ $# -ge 2 ] && shift
+              shift
+              ;;
+            --config-env=*)
+              inline_config="$inline_config ${1#*=}"
+              shift
+              ;;
+            -C | --git-dir | --work-tree | --namespace | --exec-path)
               [ $# -ge 2 ] && shift
               shift
               ;;
@@ -62,7 +94,15 @@ check_segment() {
             *) break ;;
           esac
         done
-        [ "${1:-}" = push ] || return 0
+        case $(printf '%s' "$inline_config" | tr '[:upper:]' '[:lower:]') in
+          *alias.* | *'$'*) block "git -c$inline_config could hide a force-push." ;;
+        esac
+        case ${1:-} in
+          *'$'*) block "the git subcommand is a shell expansion (${1:-}), which can't be checked." ;;
+          push) ;;
+          *) return 0 ;;
+        esac
+        [ -n "$inline_config" ] && block "git -c$inline_config on a push can force it."
         shift
         check_push "$@"
         return 0
@@ -72,8 +112,21 @@ check_segment() {
   done
 }
 
+# Split the command into simple commands. Line continuations are joined and
+# quotes and backslashes dropped. `$` stays in its word so check_push sees the
+# expansion; a backtick becomes `$` too, then both it and `(` end the segment.
 set -f # no glob expansion when splitting words
-segments=$(printf '%s\n' "$cmd" | tr -d "\"'\\\\" | awk '{ gsub(/[;&|()`$]/, "\n"); print }')
+segments=$(printf '%s\n' "$cmd" | awk '
+  /\\$/ { sub(/\\$/, ""); joined = joined $0; next }
+  {
+    line = joined $0; joined = ""
+    gsub(/["\047\\]/, "", line)
+    gsub(/`/, "$\n", line)
+    gsub(/[;&|()]/, "\n", line)
+    print line
+  }
+  END { if (joined != "") print joined }
+')
 old_ifs=$IFS
 IFS='
 '
