@@ -7,7 +7,7 @@ lint:
     sh -n tests/self-test template/.githooks/pre-commit
     jq empty template/.claude/settings.json
 
-# Template self-test: generates a Python and a Rust project and checks each.
+# Template self-test: generates a Python, a Rust and a Godot project and checks each.
 test:
     tests/self-test
 
