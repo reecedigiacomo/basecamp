@@ -1,5 +1,5 @@
-# BaseCamp's own CI: runs the template self-test, which generates a Python and a
-# Rust project, so it needs both toolchains. Separate from check.yml, which serves
+# BaseCamp's own CI: runs the template self-test, which generates a Python, a Rust
+# and a Godot project, so it needs all three toolchains. Separate from check.yml, which serves
 # generated projects.
 name: CI
 
@@ -28,6 +28,17 @@ jobs:
         run: |
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain stable --component rustfmt,clippy
           echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+
+      # The template's pinned Godot version and its Linux zip's SHA-512, the ones generated projects get.
+      - name: Install Godot
+        run: |
+          version=$(cat "template/{% if language == 'godot' %}.godot-version{% endif %}")
+          sha512=$(cat "template/{% if language == 'godot' %}.godot-linux-sha512{% endif %}")
+          curl --proto '=https' --tlsv1.2 -fsSL -o "$RUNNER_TEMP/godot.zip" \
+            "https://github.com/godotengine/godot/releases/download/$version-stable/Godot_v$version-stable_linux.x86_64.zip"
+          echo "$sha512  $RUNNER_TEMP/godot.zip" | sha512sum -c -
+          unzip -q "$RUNNER_TEMP/godot.zip" -d "$RUNNER_TEMP"
+          mv "$RUNNER_TEMP/Godot_v$version-stable_linux.x86_64" "$HOME/.local/bin/godot"
 
       - name: just check
         run: just check

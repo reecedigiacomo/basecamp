@@ -1,12 +1,12 @@
 #!/bin/sh
-# Template self-test: generates a Python and a Rust project from the working tree
-# (uncommitted changes included) into a temp folder and runs `just check` in each.
+# Template self-test: generates a Python, a Rust and a Godot project from the working
+# tree (uncommitted changes included) into a temp folder and runs `just check` in each.
 # Never skips a language: a missing tool fails.
 set -eu
 
 repo=$(cd "$(dirname "$0")/.." && pwd)
 
-for tool in uv cargo just git; do
+for tool in uv cargo godot just git; do
   if ! command -v "$tool" >/dev/null 2>&1; then
     echo "self-test: '$tool' is not on PATH. Install it, or add it to PATH, then rerun." >&2
     exit 1
@@ -25,17 +25,18 @@ fail() {
   failures=$((failures + 1))
 }
 
-generate() { # generate <language> <dest> [project_name]
+generate() { # generate <language> <dest> [project_name] [lfs]
   # --vcs-ref=HEAD makes Copier include uncommitted changes in the working tree.
   uvx copier copy --quiet --trust --defaults --vcs-ref=HEAD \
     --data "project_name=${3:-sample-parser}" \
     --data "description=A sample parser" \
     --data "language=$1" \
     --data github_owner=octocat \
+    --data "lfs=${4:-false}" \
     "$repo" "$2"
 }
 
-for language in python rust; do
+for language in python rust godot; do
   echo "== $language"
   generate "$language" "$work/$language"
   (cd "$work/$language" && just check) || fail "just check in the generated $language project"
@@ -54,6 +55,65 @@ fi
 
 grep -q cargo "$work/python/justfile" && fail "the Python justfile mentions cargo"
 grep -q uv "$work/rust/justfile" && fail "the Rust justfile mentions uv"
+grep -q -i -E 'cargo|pytest' "$work/godot/justfile" && fail "the Godot justfile mentions cargo or pytest"
+grep -q -i godot "$work/python/justfile" && fail "the Python justfile mentions Godot"
+grep -q -i godot "$work/rust/justfile" && fail "the Rust justfile mentions Godot"
+
+echo "== Godot checks catch problems"
+# expect_failure <what> <expected output> <command>...: the command must fail and print the expected text.
+expect_failure() {
+  what=$1 expected=$2
+  shift 2
+  if output=$("$@" 2>&1); then
+    fail "$what passed"
+  else
+    case $output in
+      *"$expected"*) echo "ok   $what fails" ;;
+      *) echo "$output" >&2; fail "$what failed without '$expected'" ;;
+    esac
+  fi
+}
+godot_project="$work/godot"
+in_godot() { (cd "$godot_project" && "$@"); }
+printf 'static func badly_spaced( ) -> int:\n\treturn 1\n' > "$godot_project/src/badly_formatted.gd"
+expect_failure "a badly formatted .gd file" "would reformat" in_godot just check
+rm "$godot_project/src/badly_formatted.gd"
+printf 'static func BadlyNamed() -> int:\n\treturn 1\n' > "$godot_project/src/lint_error.gd"
+expect_failure "a lint error" "function-name" in_godot just check
+rm "$godot_project/src/lint_error.gd"
+cp "$godot_project/test/test_greeting.gd" "$work/test_greeting.gd"
+sed 's/Hello, Ada!/Goodbye, Ada!/' "$work/test_greeting.gd" > "$godot_project/test/test_greeting.gd"
+expect_failure "a failing GUT test" "1 failing tests" in_godot just check
+cp "$work/test_greeting.gd" "$godot_project/test/test_greeting.gd"
+printf 'extends GutTest\n\n\nfunc test_typo() -> void:\n\tassert_eq(undeclared_name, 1)\n' > "$godot_project/test/test_parse_error.gd"
+expect_failure "a GUT test script that fails to parse" "a test script failed to load" in_godot just check
+rm "$godot_project/test/test_parse_error.gd"
+printf 'static func broken() -> int:\n\treturn undeclared_name\n' > "$godot_project/src/broken.gd"
+printf 'extends GutTest\n\nconst Broken = preload("res://src/broken.gd")\n\n\nfunc test_one() -> void:\n\tassert_eq(1, 1)\n' > "$godot_project/test/test_broken_dependency.gd"
+expect_failure "a GUT test script whose dependency fails to parse" "a test script failed to load" in_godot just check
+rm "$godot_project/src/broken.gd" "$godot_project/test/test_broken_dependency.gd"
+# /usr/bin:/bin keeps sh and the basics but drops wherever godot was installed.
+if PATH=/usr/bin:/bin command -v godot >/dev/null 2>&1; then
+  fail "godot is in /usr/bin or /bin, so the off-PATH check can't run"
+else
+  expect_failure "just test without godot on PATH" "'godot' is not on PATH" \
+    env PATH=/usr/bin:/bin "$(command -v just)" --justfile "$godot_project/justfile" test
+fi
+# A stand-in godot that reports a newer version, with a patch-less number as Godot writes x.y.0.
+mkdir "$work/newer-godot"
+printf '#!/bin/sh\necho 4.99.stable.official.abc1234\n' > "$work/newer-godot/godot"
+chmod +x "$work/newer-godot/godot"
+expect_failure "just test with a different Godot version" "write 4.99 into .godot-version" \
+  env PATH="$work/newer-godot:$PATH" "$(command -v just)" --justfile "$godot_project/justfile" test
+
+echo "== Git LFS question"
+[ -e "$work/python/.gitattributes" ] && fail "lfs=false wrote .gitattributes"
+generate python "$work/lfs" sample-parser true
+if grep -q 'filter=lfs' "$work/lfs/.gitattributes" 2>/dev/null; then
+  echo "ok   lfs=true writes .gitattributes"
+else
+  fail "lfs=true wrote no .gitattributes with LFS patterns"
+fi
 
 echo "== project names that would break the project"
 refuse() { # refuse <language> <project_name>

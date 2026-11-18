@@ -10,7 +10,7 @@ From nothing to a repo ready for the Implementation Loop. The GitHub settings ar
   uvx copier copy gh:<owner>/basecamp my-project
   ```
 
-  It asks for the project's name, a one-line description, its language (Python or Rust), and the GitHub owner whose BaseCamp repo hosts the CI workflow. To pick up later template changes, the project's README says how to run `uvx copier update`.
+  It asks for the project's name, a one-line description, its language (Python, Rust or Godot), the GitHub owner whose BaseCamp repo hosts the CI workflow, and whether to track large assets with Git LFS. To pick up later template changes, the project's README says how to run `uvx copier update`.
 
 ## 2. Create the GitHub repo and push
 
@@ -31,7 +31,7 @@ Pick the repo's visibility first: step 5 needs a public repo or a paid plan (on 
 ## 3. Get started locally
 
 - [ ] Do the "Getting started" section of the project's README ([template](template/README.md.jinja)).
-- [ ] Run `just check` once. It creates the lock file (`uv.lock` for Python, `Cargo.lock` for Rust). Commit it and push: lock files are always committed, never ignored.
+- [ ] Run `just check` once. For Python and Rust it creates the lock file (`uv.lock` or `Cargo.lock`); for Godot it creates a `.uid` file beside each script. Commit them and push: lock and `.uid` files are always committed, never ignored.
 
 ## 4. General settings
 

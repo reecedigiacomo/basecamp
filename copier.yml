@@ -17,6 +17,7 @@ language:
   choices:
     - python
     - rust
+    - godot
 
 # A name is refused when the generated project couldn't import or build itself:
 # for Python, a keyword, a standard-library module (3.12 to 3.14), or a module
@@ -79,6 +80,11 @@ github_owner:
     {% if not (github_owner | regex_search('^[A-Za-z0-9]([A-Za-z0-9-]{0,37}[A-Za-z0-9])?$')) %}
     Give the GitHub user or organization that owns the BaseCamp repo, such as octocat.
     {% endif %}
+
+lfs:
+  type: bool
+  help: Track large assets with Git LFS?
+  default: false
 
 # Derived, never asked or recorded.
 package_name:
