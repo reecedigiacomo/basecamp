@@ -1,6 +1,9 @@
 # Copier template for a new BaseCamp project. The template files live in template/.
 _subdirectory: template
 _min_copier_version: "9.0.0"
+_message_after_copy: >-
+  Next: read SETUP.md (https://github.com/{{ github_owner }}/basecamp/blob/main/SETUP.md)
+  and finish the remaining steps.
 
 # README.md is the project's own from the first commit on. Every other file,
 # CLAUDE.md included, updates through Copier's normal 3-way merge.
