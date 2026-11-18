@@ -62,7 +62,7 @@ The required check only shows up in the picker after CI has run once on a PR, so
 - [ ] Make a small change on a branch, push it, and open a PR.
 - [ ] Wait for CI (`check / check`) to finish.
 - [ ] Edit the `protect-main` ruleset: turn on **Require status checks to pass**, then add `check / check`.
-- [ ] Close the PR without merging.
+- [ ] Close the PR without merging, and delete its branch.
 
 ## 6. Security
 
