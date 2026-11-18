@@ -65,7 +65,9 @@ Each language is a plug-in: one folder under [`languages/`](languages/) holding 
 | `editorconfig` | Optional. Sections added to the core `.editorconfig`. |
 | `self-test` | Optional. More checks, sourced by [`tests/self-test`](tests/self-test) after the project passes `just check`. |
 
-To add a language, copy an existing folder (`cp -R` keeps the symlink), edit its files, and add its name to `language`'s `choices` in [`copier.yml`](copier.yml). Nothing else changes. `just check` then generates it and checks it alongside the others.
+To add a language, copy an existing folder (`cp -R` keeps the symlink), edit its files, and add its name to `language`'s `choices` in [`copier.yml`](copier.yml). Nothing else changes, docs included. `just check` then generates it and checks it alongside the others.
+
+**Fragments are Jinja.** The core's templates include `justfile`, `gitignore`, `ci-install` and `editorconfig`, so Copier renders them as Jinja, with or without a `.jinja` suffix. A just variable (`{{ name }}`) or an Actions expression (`${{ }}`) left bare renders as empty text, with no error: wrap the fragment in `{% raw %}…{% endraw %}`, as [Godot's `justfile`](languages/godot/justfile) does. In `project/`, only files ending in `.jinja` are rendered.
 
 **Projects own their CI.** A generated project gets a complete `.github/workflows/ci.yml` for its language, as its own file, and may add steps to it. `copier update` merges in template changes like any other file. The job's check is named `check / check`, so rulesets made for the shared workflow keep matching. Older projects, whose `ci.yml` calls the shared `check.yml@ci-v1`, keep working: the `ci-v1` branch is frozen and never moves again, so it keeps that workflow. They switch to their own CI when they run `copier update`.
 
@@ -82,7 +84,7 @@ Locally, `just check` runs every language whose tools are installed and skips th
 | [`install`](install) | Sets up a machine: links the skills and practices, checks for tools. |
 | [`.github/workflows/`](.github/workflows/) | BaseCamp's own CI, which runs `just check` with every language's tools installed. |
 | [`template/`](template/) | The core of the [Copier](https://copier.readthedocs.io/) project template, configured by [`copier.yml`](copier.yml). |
-| [`languages/`](languages/) | One plug-in folder per language: Python, Rust and Godot. See [Languages](#languages). |
+| [`languages/`](languages/) | One plug-in folder per language. See [Languages](#languages). |
 
 Coming next: a first end-to-end run in a sandbox project.
 
