@@ -1,0 +1,42 @@
+# Godot's own self-test checks, sourced by tests/self-test with $project set.
+
+in_godot() { (cd "$project" && "$@"); }
+printf 'static func badly_spaced( ) -> int:\n\treturn 1\n' > "$project/src/badly_formatted.gd"
+expect_failure "a badly formatted .gd file" "would reformat" in_godot just check
+rm "$project/src/badly_formatted.gd"
+printf 'static func BadlyNamed() -> int:\n\treturn 1\n' > "$project/src/lint_error.gd"
+expect_failure "a lint error" "function-name" in_godot just check
+rm "$project/src/lint_error.gd"
+cp "$project/test/test_greeting.gd" "$work/test_greeting.gd"
+sed 's/Hello, Ada!/Goodbye, Ada!/' "$work/test_greeting.gd" > "$project/test/test_greeting.gd"
+expect_failure "a failing GUT test" "1 failing tests" in_godot just check
+cp "$work/test_greeting.gd" "$project/test/test_greeting.gd"
+printf 'extends GutTest\n\n\nfunc test_typo() -> void:\n\tassert_eq(undeclared_name, 1)\n' > "$project/test/test_parse_error.gd"
+expect_failure "a GUT test script that fails to parse" "a script failed to load" in_godot just check
+rm "$project/test/test_parse_error.gd"
+printf 'static func broken() -> int:\n\treturn undeclared_name\n' > "$project/src/broken.gd"
+expect_failure "a script no test loads that fails to parse" "a script failed to load" in_godot just check
+printf 'extends GutTest\n\nconst Broken = preload("res://src/broken.gd")\n\n\nfunc test_one() -> void:\n\tassert_eq(1, 1)\n' > "$project/test/test_broken_dependency.gd"
+expect_failure "a GUT test script whose dependency fails to parse" "a script failed to load" in_godot just check
+rm "$project/src/broken.gd" "$project/test/test_broken_dependency.gd"
+# /usr/bin:/bin keeps sh and the basics but drops wherever godot was installed.
+if PATH=/usr/bin:/bin command -v godot >/dev/null 2>&1; then
+  fail "godot is in /usr/bin or /bin, so the off-PATH check can't run"
+else
+  expect_failure "just test without godot on PATH" "'godot' is not on PATH" \
+    env PATH=/usr/bin:/bin "$(command -v just)" --justfile "$project/justfile" test
+fi
+# Stand-in godots: a newer stable one with a patch-less number, as Godot writes x.y.0,
+# and a release candidate of the pinned version.
+pinned=$(cat "$project/.godot-version")
+fake_godot() { # fake_godot <dir> <version output>
+  mkdir "$work/$1"
+  printf '#!/bin/sh\necho %s\n' "$2" > "$work/$1/godot"
+  chmod +x "$work/$1/godot"
+}
+fake_godot newer-godot 4.99.stable.official.abc1234
+expect_failure "just test with a different Godot version" "write 4.99 into .godot-version" \
+  env PATH="$work/newer-godot:$PATH" "$(command -v just)" --justfile "$project/justfile" test
+fake_godot rc-godot "$pinned.rc1.official.abc1234"
+expect_failure "just test with a release candidate of the pinned version" "isn't a stable build" \
+  env PATH="$work/rc-godot:$PATH" "$(command -v just)" --justfile "$project/justfile" test

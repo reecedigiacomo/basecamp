@@ -1,0 +1,3 @@
+# Rust's own self-test checks, sourced by tests/self-test with $project set.
+
+refuse rust std

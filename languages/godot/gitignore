@@ -1,0 +1,3 @@
+.godot/
+# GUT, fetched by `just test`.
+addons/gut/

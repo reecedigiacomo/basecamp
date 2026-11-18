@@ -5,9 +5,10 @@ fmt:
 lint:
     bash -n install
     sh -n tests/self-test template/.githooks/pre-commit
+    for f in languages/*/ci-install languages/*/self-test; do sh -n "$f"; done
     jq empty template/.claude/settings.json
 
-# Template self-test: generates a Python, a Rust and a Godot project and checks each.
+# Template self-test: generates a project for each language and checks it.
 test:
     tests/self-test
 

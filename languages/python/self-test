@@ -1,0 +1,17 @@
+# Python's own self-test checks, sourced by tests/self-test with $project set.
+
+# A stale uv_build bound only warns, so any build warning counts as a failure here.
+# --color never: FORCE_COLOR or CLICOLOR_FORCE would color "warning:" and hide it from the match.
+if build_log=$(cd "$project" && uv build --color never 2>&1); then
+  case $build_log in
+    *warning:*) echo "$build_log" >&2; fail "uv build warns in the generated Python project" ;;
+  esac
+else
+  echo "$build_log" >&2
+  fail "uv build in the generated Python project"
+fi
+
+refuse python class
+refuse python json
+refuse python pytest
+refuse python py

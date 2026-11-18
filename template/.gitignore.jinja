@@ -3,16 +3,4 @@
 .env.*
 *.log
 .claude/worktrees/
-{% if language == 'python' -%}
-.venv/
-__pycache__/
-.pytest_cache/
-.ruff_cache/
-dist/
-{% elif language == 'rust' -%}
-target/
-{% elif language == 'godot' -%}
-.godot/
-# GUT, fetched by `just test`.
-addons/gut/
-{% endif -%}
+{% include 'languages/' ~ language ~ '/gitignore' -%}

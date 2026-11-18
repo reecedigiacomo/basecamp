@@ -1,0 +1,12 @@
+curl -LsSf https://astral.sh/uv/install.sh | sh
+# Godot isn't cached: the download takes seconds, and a cache would need its own key upkeep.
+# .godot-linux-sha512 holds only the zip's hash, copied from the release's SHA512-SUMS.txt.
+# Bumping Godot means updating it together with .godot-version.
+version=$(cat .godot-version)
+curl --proto '=https' --tlsv1.2 -fsSL -o "$RUNNER_TEMP/godot.zip" \
+  "https://github.com/godotengine/godot/releases/download/$version-stable/Godot_v$version-stable_linux.x86_64.zip"
+echo "$(cat .godot-linux-sha512)  $RUNNER_TEMP/godot.zip" | sha512sum -c -
+unzip -q "$RUNNER_TEMP/godot.zip" -d "$RUNNER_TEMP"
+mkdir -p "$HOME/.local/bin"
+mv "$RUNNER_TEMP/Godot_v$version-stable_linux.x86_64" "$HOME/.local/bin/godot"
+echo "$HOME/.local/bin" >> "$GITHUB_PATH"

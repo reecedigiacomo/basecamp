@@ -1,0 +1,93 @@
+{% raw -%}
+# gdtoolkit and its dependencies are pinned in .gdtoolkit-constraints.txt
+# (from `uv pip compile --universal` of gdtoolkit==<version>).
+gdtoolkit := "uvx --constraints .gdtoolkit-constraints.txt --from gdtoolkit"
+gut_version := "9.7.1"
+# SHA-256 of the GUT release tarball. Update it with gut_version.
+gut_sha256 := "6da99c4e9228d9bec3fb4bd1730a487770a989f0f511dac82a2897a964613385"
+
+fmt:
+    {{ gdtoolkit }} gdformat .
+
+lint:
+    {{ gdtoolkit }} gdlint .
+
+# Fetches GUT into the gitignored addons/gut/ on first run (or when gut_version
+# changes), imports the project headless so class_name scripts resolve, loads every
+# script, then runs GUT.
+test:
+    #!/bin/sh
+    set -eu
+    want=$(cat .godot-version)
+    archive="https://godotengine.org/download/archive/$want-stable/"
+    if ! command -v godot >/dev/null 2>&1; then
+      echo "just test: 'godot' is not on PATH. Download Godot $want from $archive and add it to PATH." >&2
+      exit 1
+    fi
+    have=$(godot --version)
+    case $have in
+      "$want.stable" | "$want.stable."*) ;;
+      *)
+        echo "just test: this project pins Godot $want stable (in .godot-version), but 'godot' is $have." >&2
+        # The bare version: 4.7.2.stable.official.abc gives 4.7.2, 4.8.stable.official.abc gives 4.8.
+        have_version=$(echo "$have" | sed -E 's/^([0-9]+(\.[0-9]+)*).*/\1/')
+        case $have in
+          "$have_version.stable" | "$have_version.stable."*)
+            echo "Download Godot $want from $archive, or move the project to $have_version: write $have_version into .godot-version, and only the hash of Godot_v$have_version-stable_linux.x86_64.zip from https://github.com/godotengine/godot/releases/download/$have_version-stable/SHA512-SUMS.txt into .godot-linux-sha512." >&2
+            ;;
+          *) echo "That isn't a stable build. Download Godot $want from $archive." >&2 ;;
+        esac
+        exit 1
+        ;;
+    esac
+    work=$(mktemp -d)
+    trap 'rm -r -f "$work"' EXIT
+    if ! grep -qs 'version="{{ gut_version }}"' addons/gut/plugin.cfg; then
+      echo "Fetching GUT {{ gut_version }} into addons/gut/"
+      curl --proto '=https' --tlsv1.2 -fsSL -o "$work/gut.tar.gz" \
+        "https://github.com/bitwes/Gut/archive/refs/tags/v{{ gut_version }}.tar.gz"
+      # A plain assignment, so a missing or failing shasum stops the recipe with its own error.
+      got=$(shasum -a 256 <"$work/gut.tar.gz")
+      if [ "${got%% *}" != "{{ gut_sha256 }}" ]; then
+        echo "just test: the GUT download doesn't match gut_sha256." >&2
+        exit 1
+      fi
+      tar -xzf "$work/gut.tar.gz" -C "$work"
+      rm -r -f addons/gut
+      mkdir -p addons
+      mv "$work/Gut-{{ gut_version }}/addons/gut" addons/gut
+    fi
+    godot --headless --import
+    # Neither gdlint nor the import parses scripts, and GUT skips a test script that fails
+    # to load and still passes. So load every script outside addons/ and fail on any error.
+    cat >"$work/load_scripts.gd" <<'GDSCRIPT'
+    extends SceneTree
+
+
+    func _init() -> void:
+        _load_dir("res://")
+        quit()
+
+
+    func _load_dir(path: String) -> void:
+        for dir in DirAccess.get_directories_at(path):
+            if not dir.begins_with(".") and not (path == "res://" and dir == "addons"):
+                _load_dir(path.path_join(dir))
+        for file in DirAccess.get_files_at(path):
+            if file.get_extension() == "gd":
+                load(path.path_join(file))
+    GDSCRIPT
+    godot --headless -s "$work/load_scripts.gd" >"$work/load.log" 2>&1 || true
+    if grep -q 'Failed to load script "res://' "$work/load.log"; then
+      cat "$work/load.log" >&2
+      echo "just test: a script failed to load. See the errors above." >&2
+      exit 1
+    fi
+    godot --headless -s addons/gut/gut_cmdln.gd -gdir=res://test -ginclude_subdirs -gexit
+
+# Checks everything without changing anything.
+check:
+    {{ gdtoolkit }} gdformat --check .
+    {{ gdtoolkit }} gdlint .
+    just test
+{% endraw -%}
