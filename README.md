@@ -41,7 +41,7 @@ cd basecamp
 
 `install` links the skills into `~/.claude/skills` and `practices.md` into `~/.claude/basecamp/`, then checks for the tools BaseCamp uses (`copier`, `just`, `rustup`, `gh`). It shows a plan first, then asks before linking a skill, replacing anything, or installing a tool. `practices.md` is linked without asking, since the BaseCamp skills read it, and skills you name with `--skills` skip the "Link skill?" question. Anything real it replaces is moved to a backup, never deleted; a replaced link is printed with its old target. Run `./install --help` for options, such as choosing which skills to link or where.
 
-`install` doesn't install Godot or git-lfs: install them by hand (`brew install --cask godot`, `brew install git-lfs`), and with LFS on, run `git lfs install` once. Godot is needed by Godot projects and by BaseCamp's own `just check`, whose self-test checks a Godot project. Both need the version pinned in `.godot-version`: if brew's is newer, get that one from [Godot's archive](https://godotengine.org/download/archive/).
+`install` doesn't install Godot or git-lfs: install them by hand (`brew install --cask godot`, `brew install git-lfs`), and with LFS on, run `git lfs install` once. Godot is needed by Godot projects and by BaseCamp's own `just check`, whose self-test checks a Godot project. Both need the version pinned in the template's `.godot-version`: if brew's is newer, get that one from [Godot's archive](https://godotengine.org/download/archive/).
 
 The links point into your clone, so editing a skill or running `git pull` takes effect right away. It also means the clone has to stay where it is: if you move it, rerun `./install` to repair the links.
 
