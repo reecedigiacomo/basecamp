@@ -50,12 +50,13 @@ Every project has the same four commands:
 
 ## Writing
 
-Covers everything an agent writes for a reader: PR descriptions, posts, reports, commit bodies, and code comments.
+Covers everything an agent writes for a reader: PR descriptions, posts, reports (including to the human in chat), commit bodies, and code comments.
 
 - **The code is the source.** Prose says only what the code can't: why, what was dropped, what's risky.
 - **Deletion test:** cut any sentence the reader could get from the code or diff in seconds.
 - **Point, don't describe:** link `file:line` or the diff thread instead of explaining the code.
 - **Lead with the conclusion.**
+- **Chat reports:** lead with the result and its link. Keep it to a few lines unless the human asks for more.
 - **Findings and Human Decisions:** the claim, one evidence link, the ask. A Human Decision adds the options, each saying whether it changes the brief, and a recommendation, nothing else.
 - **Sign every agent post** with its first line: `Implementation · round <n>`, `PR Review · round <n>`, `Human Brief`, or `Orchestrator`. An unsigned post is the human's. A PR description is signed on the line under `Closes #N`. A signature is a label, never proof of who posted.
 
