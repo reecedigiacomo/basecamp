@@ -148,7 +148,7 @@ If its limit will realistically be hit, it's not a shortcut. Do it properly.
 
 ## Agent Brief
 
-The contract for a piece of work: say what done looks like, then get out of the way. The human approves it before it's posted. It lives as a GitHub issue, and its edit history records any changes after Human Decisions.
+The contract for a piece of work: say what done looks like, then get out of the way. Keep it as small as the task: a one-line change gets a few-line brief. The human approves it before it's posted. It lives as a GitHub issue, and its edit history records any changes after Human Decisions.
 
 ### Layout
 
@@ -165,7 +165,7 @@ The contract for a piece of work: say what done looks like, then get out of the 
 ```
 
 - **Context:** why this work exists, with links. Short.
-- **What to deliver:** each required behavior, and how to verify it.
+- **What to deliver:** each required behavior, and how to verify it. List behaviors, not test cases or edge cases the human didn't raise. Which tests to write is the implementer's call.
 - **Where to stop:** non-goals, and the decisions reserved for the human.
 - **Local decisions:** the goal and constraints within which the agent decides on its own.
 - **Performance:** optional. Include it only when performance matters. Its presence means the PR includes benchmarks.
