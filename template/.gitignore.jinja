@@ -11,4 +11,8 @@ __pycache__/
 dist/
 {% elif language == 'rust' -%}
 target/
+{% elif language == 'godot' -%}
+.godot/
+# GUT, fetched by `just test`.
+addons/gut/
 {% endif -%}

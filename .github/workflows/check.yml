@@ -6,7 +6,7 @@ on:
   workflow_call:
     inputs:
       language:
-        description: "The project's language: python or rust."
+        description: "The project's language: python, rust or godot."
         required: true
         type: string
 
@@ -22,11 +22,11 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Reject an unknown language
-        if: inputs.language != 'python' && inputs.language != 'rust'
+        if: inputs.language != 'python' && inputs.language != 'rust' && inputs.language != 'godot'
         env:
           LANGUAGE: ${{ inputs.language }}
         run: |
-          echo "::error::language must be python or rust, got '$LANGUAGE'"
+          echo "::error::language must be python, rust or godot, got '$LANGUAGE'"
           exit 1
 
       - uses: actions/checkout@v7
@@ -37,7 +37,7 @@ jobs:
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Install uv
-        if: inputs.language == 'python'
+        if: inputs.language == 'python' || inputs.language == 'godot'
         run: |
           curl -LsSf https://astral.sh/uv/install.sh | sh
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
@@ -47,6 +47,18 @@ jobs:
         run: |
           curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain stable --component rustfmt,clippy
           echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+
+      # Not cached: the download takes seconds, and a cache would need its own key upkeep.
+      - name: Install Godot
+        if: inputs.language == 'godot'
+        run: |
+          version=$(cat .godot-version)
+          curl --proto '=https' --tlsv1.2 -fsSL -o "$RUNNER_TEMP/godot.zip" \
+            "https://github.com/godotengine/godot/releases/download/$version-stable/Godot_v$version-stable_linux.x86_64.zip"
+          unzip -q "$RUNNER_TEMP/godot.zip" -d "$RUNNER_TEMP"
+          mkdir -p "$HOME/.local/bin"
+          mv "$RUNNER_TEMP/Godot_v$version-stable_linux.x86_64" "$HOME/.local/bin/godot"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: just check
         run: just check

@@ -1,0 +1,5 @@
+# Skips the GUT download, which isn't this project's code. Unset keys keep gdtoolkit's defaults.
+excluded_directories:
+  - .git
+  - .godot
+  - gut

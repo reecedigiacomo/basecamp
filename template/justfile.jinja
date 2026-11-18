@@ -28,4 +28,49 @@ check:
     cargo fmt --check
     cargo clippy --all-targets -- -D warnings
     cargo test
+{% elif language == 'godot' -%}
+{% raw -%}
+gdtoolkit := "gdtoolkit==4.5.0"
+gut_version := "9.7.1"
+
+fmt:
+    uvx --from {{ gdtoolkit }} gdformat .
+
+lint:
+    uvx --from {{ gdtoolkit }} gdlint .
+
+# Fetches GUT into the gitignored addons/gut/ on first run (or when gut_version
+# changes), imports the project headless so class_name scripts resolve, then runs GUT.
+test:
+    #!/bin/sh
+    set -eu
+    want=$(cat .godot-version)
+    if ! command -v godot >/dev/null 2>&1; then
+      echo "just test: 'godot' is not on PATH. Install Godot $want (brew install --cask godot) or add it to PATH." >&2
+      exit 1
+    fi
+    have=$(godot --version)
+    case $have in
+      "$want".*) ;;
+      *) echo "just test: this project pins Godot $want (in .godot-version), but 'godot' is $have." >&2; exit 1 ;;
+    esac
+    if ! grep -qs 'version="{{ gut_version }}"' addons/gut/plugin.cfg; then
+      echo "Fetching GUT {{ gut_version }} into addons/gut/"
+      download=$(mktemp -d)
+      trap 'rm -r -f "$download"' EXIT
+      curl --proto '=https' --tlsv1.2 -fsSL "https://github.com/bitwes/Gut/archive/refs/tags/v{{ gut_version }}.tar.gz" \
+        | tar -xz -C "$download"
+      rm -r -f addons/gut
+      mkdir -p addons
+      mv "$download/Gut-{{ gut_version }}/addons/gut" addons/gut
+    fi
+    godot --headless --import
+    godot --headless -s addons/gut/gut_cmdln.gd -gdir=res://test -ginclude_subdirs -gexit
+
+# Checks everything without changing anything.
+check:
+    uvx --from {{ gdtoolkit }} gdformat --check .
+    uvx --from {{ gdtoolkit }} gdlint .
+    just test
+{% endraw -%}
 {% endif -%}

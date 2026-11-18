@@ -17,6 +17,7 @@ language:
   choices:
     - python
     - rust
+    - godot
 
 # A name is refused when the generated project couldn't import or build itself:
 # for Python, a keyword, a standard-library module (3.12 to 3.14), or a module
