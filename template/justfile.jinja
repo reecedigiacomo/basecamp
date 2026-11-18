@@ -66,8 +66,12 @@ test:
       echo "Fetching GUT {{ gut_version }} into addons/gut/"
       curl --proto '=https' --tlsv1.2 -fsSL -o "$work/gut.tar.gz" \
         "https://github.com/bitwes/Gut/archive/refs/tags/v{{ gut_version }}.tar.gz"
-      echo "{{ gut_sha256 }}  $work/gut.tar.gz" | shasum -a 256 -c - >/dev/null 2>&1 \
-        || { echo "just test: the GUT download doesn't match gut_sha256." >&2; exit 1; }
+      # A plain assignment, so a missing or failing shasum stops the recipe with its own error.
+      got=$(shasum -a 256 <"$work/gut.tar.gz")
+      if [ "${got%% *}" != "{{ gut_sha256 }}" ]; then
+        echo "just test: the GUT download doesn't match gut_sha256." >&2
+        exit 1
+      fi
       tar -xzf "$work/gut.tar.gz" -C "$work"
       rm -r -f addons/gut
       mkdir -p addons
