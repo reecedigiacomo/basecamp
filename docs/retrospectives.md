@@ -7,7 +7,7 @@ Looked at afterward, across PRs and projects, to improve the loop. Not built int
 ## Sources
 
 Only lasting ones:
-- **GitHub:** PR Reviews (their rulings tables always use the same columns, in the same order), Human Decisions, Human Briefs, merges, issue edits, and labels.
+- **GitHub:** PR Reviews (their rulings are always one line each, in the same form), Human Decisions, Human Briefs, merges, issue edits, and labels.
 - **Claude Code session logs:** tokens and cost per session, grouped by session name (`<repo> #<issue> · <stage> · r<round>`).
 
 The conductor's results file is temporary and isn't a source.

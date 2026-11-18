@@ -58,7 +58,7 @@ Session (mine)   /implementation-loop #12        ← conductor
 
 The loop's weight fits the change, so a small change doesn't pay for a full review. [`/pr-review`](../skills/pr-review/SKILL.md) picks each round's weight in step 1; the conductor doesn't need to know it.
 
-- **`small` brief:** review is Adjudicate alone, with no reviewer subagents. It covers the same personas and still posts one `PR Review · round <n>` with the usual rulings table. Grilling, the brief, and the Human Brief work as for `standard`.
+- **`small` brief:** review is Adjudicate alone, with no reviewer subagents. It covers the same personas and still posts one `PR Review · round <n>` with the usual rulings. Grilling, the brief, and the Human Brief work as for `standard`.
 - **Fix round,** at any size: when a review's accepted findings are all minor (after Adjudicate re-rates them) and nothing was escalated, its For Implementation list is followed by `Next round: fix`. Implementation fixes or defers just those findings, and the next review is Adjudicate alone, checking only those fixes against those findings. If one re-rates to major or worse, or the new commits change more than those findings need, that round becomes a full one at the brief's size. A blocker or major always means a full next round. A fix round's result line reads `review r<n> (fix): ...`.
 - **Mis-sized brief:** if Implementation or Adjudicate judges that a `small` brief touches something riskier, Adjudicate asks me once, as a Human Decision: "re-size to standard?" No session re-sizes on its own. If I say yes, however I post it, the conductor goes straight to a new review, which finds my answer, changes the brief's `Size:` line to `standard`, and runs at standard size.
 
