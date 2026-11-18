@@ -49,7 +49,7 @@ Session (mine)   /implementation-loop #12        ← conductor
                    ├─ "myapp #12 · review · r1"      → /pr-review, 2 accepted    → "review r1: 2 accepted · PR #34"
                    ├─ "myapp #12 · implement · r2"   → fixes                     → ...
                    └─ "myapp #12 · review · r2"      → nothing accepted, Human Brief posted → "review r2: done"
-                 conductor stops → short status for me
+                 conductor stops → "PR: <link>" / "ready to merge"
 ```
 
 ### The conductor
@@ -59,7 +59,7 @@ Session (mine)   /implementation-loop #12        ← conductor
 - **Names every session** it starts: `<repo> #<issue> · <stage> · r<round>`. Its own name is `<repo> · conductor`; since a session can't rename itself, it asks me to run `/rename` when it starts.
 - **Cleans up.** It removes each finished session, except a review session that escalated, which stays open until I've answered.
 - **Watches for stuck sessions.** If one shows as waiting in `claude agents`, it tells me: *"Session `<name>` is waiting for you: run `claude attach <name>`."*
-- **Stops** for a Human Decision, a waiting session, a refused review (the PR it found is from a fork), or a posted Human Brief, and gives me a short status: one line per round so far, why it stopped, and the PR link.
+- **Stops** for a Human Decision, a waiting session, a refused review (the PR it found is from a fork), or a posted Human Brief, and gives me two lines: the PR link, then `ready to merge` or `blocked: <reason>`.
 
 ### Where it runs
 

@@ -16,7 +16,7 @@ Turn the shared understanding from this session's grilling into an Agent Brief: 
 
 ## Steps
 
-1. **Draft the brief** from what the grilling settled, using the Agent Brief layout.
+1. **Draft the brief** from what the grilling settled, using the Agent Brief layout, sized to the task as that section says.
    - **What to deliver:** every required behavior, each with how to verify it. A behavior with no way to verify it isn't finished. Ask the human how to verify it.
    - **Where to stop:** name the non-goals and the decisions reserved for the human. Anything the grilling marked as the human's call goes here.
    - **Local decisions:** the goal and constraints the agent decides within.
