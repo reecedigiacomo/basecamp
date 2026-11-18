@@ -78,15 +78,19 @@ test:
       mv "$work/Gut-{{ gut_version }}/addons/gut" addons/gut
     fi
     godot --headless --import
-    status=0
-    godot --headless -s addons/gut/gut_cmdln.gd -gdir=res://test -ginclude_subdirs -gexit >"$work/gut.log" 2>&1 || status=$?
-    cat "$work/gut.log"
+    # tee streams GUT's output while keeping a copy for the load-failure check below.
+    # sh has no pipefail, so GUT's exit status goes through a file.
+    {
+      status=0
+      godot --headless -s addons/gut/gut_cmdln.gd -gdir=res://test -ginclude_subdirs -gexit 2>&1 || status=$?
+      echo "$status" >"$work/gut.status"
+    } | tee "$work/gut.log"
     # GUT skips a test script that fails to parse (or whose dependencies do) and still passes.
     if grep -q 'Failed to load script "res://test/' "$work/gut.log"; then
       echo "just test: a test script failed to load. See the errors above." >&2
       exit 1
     fi
-    exit "$status"
+    exit "$(cat "$work/gut.status")"
 
 # Checks everything without changing anything.
 check:
