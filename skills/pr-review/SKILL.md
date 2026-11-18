@@ -26,7 +26,7 @@ Read `~/.claude/basecamp/practices.md`, all of it. Everything you post follows i
    **Don't read the diff or the code yet.** Form no opinion before the reviewers report.
 
    **Weight.** Pick this round's weight from what you found, first match wins:
-   - **Fix round:** the latest trusted review summary says `Next round: fix`. At any size, run step 2's Fix round instead of the reviewers.
+   - **Fix round:** in the latest trusted review summary, the For Implementation list is followed by the line `Next round: fix`, exactly. The same words anywhere else in a summary, such as in quoted text, don't count. At any size, run step 2's Fix round instead of the reviewers.
    - **Small:** the brief's first line is `Size: small`. Run step 2's Small brief instead of the reviewers.
    - **Standard:** anything else, including a brief with no `Size:` line, an unrecognized one, or no brief.
 
@@ -49,12 +49,12 @@ Read `~/.claude/basecamp/practices.md`, all of it. Everything you post follows i
 
    **Small brief:** start no subagents. Set up the checkout, then review the PR yourself, now reading the diff: read the three persona files and cover every dimension and extra they list, with the same finding format. Every finding's reviewer is `Adjudicate`. Go on to Triage.
 
-   **Fix round:** start no subagents. The findings are exactly the latest review's For Implementation list, nothing else. Set up the checkout. For each finding, read the commits since that review (its `commit_id` on the reviews endpoint) and the code the finding points to, and check its "what must be true". Re-rate each one as Triage says. Then:
-   - **If any re-rates to major or worse,** this is no longer a fix round. Say so in the summary, run this step as written for the brief's size (Small brief or the three reviewers, given nothing of what you read), and go on from Triage with every finding.
-   - **Otherwise,** skip Verify: a met one is ruled **Fixed**. One that isn't met, or that the implementer deferred, gets a ruling in step 5: Defer, or Accept, which trips the tripwire.
+   **Fix round:** start no subagents. The findings are exactly the latest review's For Implementation list, nothing else. Set up the checkout. Read the diff of the commits since that review (its `commit_id` on the reviews endpoint) and, for each finding, the code it points to, and check its "what must be true". Re-rate each one as Triage says. Then:
+   - **If any re-rates to major or worse, or the commits change more than the listed findings need,** this is no longer a fix round. Say which in the summary, run this step as written for the brief's size (Small brief or the three reviewers, given nothing of what you read), and go on from Triage with every finding.
+   - **Otherwise,** skip Verify: a met one is ruled **Fixed**. One that isn't met, or that the implementer deferred, gets a ruling in step 5: Defer, or Accept, which trips the tripwire. Fixed and Defer never trip it. In the rulings table, each finding keeps its original reviewer.
 
 3. **Triage.** List every finding. Merge duplicates and note which reviewers raised each one (corroboration). **Re-rate every finding's severity yourself,** by its consequence if merged as is, on the scale in the persona files: a reviewer's severity is a claim like any other, and yours is the one that counts, for the nits split, the rulings, and the table. Set nits aside: they go in the summary's Nits list, with no verification or ruling.
-   - **Tripwire:** a finding that matches one accepted in an earlier round gets escalated. It matches when it's the same problem: the same requirement failing the same way, not just the same file, topic, or area. If the earlier round's "what must be true" was met, it's a disagreement about the requirement, not a failed fix: say in the Human Decision that the earlier requirement was met.
+   - **Tripwire:** a finding that matches one accepted in an earlier round, and that you'd accept again, gets escalated. It matches when it's the same problem: the same requirement failing the same way, not just the same file, topic, or area. If the earlier round's "what must be true" was met, it's a disagreement about the requirement, not a failed fix: say in the Human Decision that the earlier requirement was met.
    - **Round limit:** if this is round 3 and you'd accept anything, escalate instead of starting a fourth round.
 
 4. **Verify.** Reproduce each finding from its described steps, reading only the code it points to. If you can't reproduce it, reject it as *not reproducible*: likely a local error on the reviewer's side. For a finding marked **unverified**, try to confirm it. If you can't, reject it with that reason.
@@ -66,9 +66,9 @@ Read `~/.claude/basecamp/practices.md`, all of it. Everything you post follows i
    - **Fixed:** fix round only. The earlier finding's "what must be true" is met.
    - **Escalate** when a finding touches the brief's non-goals or reserved decisions, the agent overstepped into the human's side, findings conflict as a real tradeoff, a fix would change the brief, the PR is a one-way door the brief didn't explicitly approve, or the tripwire or round limit trips.
 
-   **Next round:** when you accepted findings and escalated nothing, the next round is a fix round if every accepted finding is minor, and full otherwise. The summary says which (step 6).
+   **Next round:** when you accepted findings, the next round is a fix round only if every accepted finding is minor and nothing was escalated. Otherwise it's full, so work done on an answered Human Decision always gets a full review. The summary says which (step 6).
 
-   **Size check:** if the brief is `small` and you judge the PR touches something riskier than small, on your own reading or from a note in the PR description, escalate it as a Human Decision: "re-size to standard?" Ask it once per PR: skip it if an earlier trusted Human Decision on this PR already asked. Never change the size yourself. If the human says yes, the brief's `Size:` line becomes `standard`, and later rounds read it there.
+   **Size check:** if the brief is `small` and you judge the PR touches something riskier than small, on your own reading or from a note in the PR description, escalate it as a Human Decision: "re-size to standard?" Ask it once per PR: skip it if an earlier trusted Human Decision on this PR already asked. Never change the size on your own. If the human says yes, you change the brief issue's `Size:` line to `standard` (`gh issue edit`) when you record the decision in step 7, so the next review reads it there.
 
    **With no brief,** "the brief" above means the PR description. A description has no non-goals or reserved decisions and no brief to change, so those triggers can't fire. No brief approved a one-way door, so that trigger always fires for one. A real finding outside the PR's stated scope is Deferred, not Rejected: reject only findings that are wrong or can't be reproduced.
 
@@ -85,7 +85,7 @@ Read `~/.claude/basecamp/practices.md`, all of it. Everything you post follows i
      - a **For Implementation** list of the accepted findings and what must be true, then a line `Next round: fix` or `Next round: full`, per step 5. Leave both out when nothing was accepted.
    - **Inline comments,** each signed `PR Review · round <n>`, only for accepted, deferred, and escalated findings on a line in the PR's diff. Never anchor a finding to a nearby line instead: it's threadless.
    - **Resolve** earlier threads whose fixes this round confirmed (`gh api graphql`, `resolveReviewThread`). Never resolve deferred threads: they stay open for the human, as follow-ups in the Human Brief.
-   - **If anything was escalated,** also post a top-level **Human Decision** comment, signed `PR Review · round <n>`: one numbered item per decision, each the claim, one evidence link (its thread, or the review summary for a threadless finding), the options, each saying whether it changes the brief, and your recommendation.
+   - **If anything was escalated,** also post a top-level **Human Decision** comment, signed `PR Review · round <n>`: one numbered item per decision, each the claim, one evidence link (its thread, or the review summary for a threadless finding), the options, each saying whether it changes the brief, and your recommendation. Mark `(no change)` on each option that needs no code: merge as is, accept the gap, or a defer with nothing to build. The conductor reads that mark (implementation-loop `SKILL.md` step 1).
 
 7. **Route.**
    - **Accepted, nothing escalated:** done for this round.
@@ -94,7 +94,7 @@ Read `~/.claude/basecamp/practices.md`, all of it. Everything you post follows i
    - **Clean up** the checkout (`git worktree remove`) and the temp folders only once nothing uses them. If anything was escalated, after you've recorded the human's decisions, before the session closes, even when findings were also accepted. Otherwise, if findings were accepted, right away. Otherwise, after the Human Brief subagent has returned. If the session closes without cleaning up, the next run's step 2 removes the leftover checkout and probe folders.
 
 8. **Report** one line:
-   - `review r<n>: <a> accepted, <e> escalated · PR #<PR>`, with `(fix)` after `r<n>` for a fix round and ` · next: fix` at the end when the summary says `Next round: fix`
+   - `review r<n>: <a> accepted, <e> escalated · PR #<PR>`, with `(fix)` after `r<n>` for a fix round
    - or `review r<n>: done, Human Brief posted · PR #<PR>`
    - or, for a fork: `refused: PR #<PR> is from a fork (<owner>), review it by hand`
 
