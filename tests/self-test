@@ -99,6 +99,12 @@ else
   expect_failure "just test without godot on PATH" "'godot' is not on PATH" \
     env PATH=/usr/bin:/bin "$(command -v just)" --justfile "$godot_project/justfile" test
 fi
+# A stand-in godot that reports a newer version, with a patch-less number as Godot writes x.y.0.
+mkdir "$work/newer-godot"
+printf '#!/bin/sh\necho 4.99.stable.official.abc1234\n' > "$work/newer-godot/godot"
+chmod +x "$work/newer-godot/godot"
+expect_failure "just test with a different Godot version" "write 4.99 into .godot-version" \
+  env PATH="$work/newer-godot:$PATH" "$(command -v just)" --justfile "$godot_project/justfile" test
 
 echo "== Git LFS question"
 [ -e "$work/python/.gitattributes" ] && fail "lfs=false wrote .gitattributes"

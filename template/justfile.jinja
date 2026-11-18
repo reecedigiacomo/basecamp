@@ -53,13 +53,13 @@ test:
       exit 1
     fi
     have=$(godot --version)
-    case $have in
-      "$want".*) ;;
-      *)
-        echo "just test: this project pins Godot $want (in .godot-version), but 'godot' is $have." >&2
-        echo "Download Godot $want from $archive, or move the project to $have by updating .godot-version and .godot-linux-sha256." >&2
-        exit 1 ;;
-    esac
+    # The bare version: 4.7.2.stable.official.abc gives 4.7.2, 4.8.stable.official.abc gives 4.8.
+    have_version=$(echo "$have" | sed -E 's/^([0-9]+(\.[0-9]+)*).*/\1/')
+    if [ "$have_version" != "$want" ]; then
+      echo "just test: this project pins Godot $want (in .godot-version), but 'godot' is $have." >&2
+      echo "Download Godot $want from $archive, or move the project to $have_version: write $have_version into .godot-version, and the Godot_v$have_version-stable_linux.x86_64.zip hash from https://github.com/godotengine/godot/releases/download/$have_version-stable/SHA512-SUMS.txt into .godot-linux-sha512." >&2
+      exit 1
+    fi
     work=$(mktemp -d)
     trap 'rm -r -f "$work"' EXIT
     if ! grep -qs 'version="{{ gut_version }}"' addons/gut/plugin.cfg; then
