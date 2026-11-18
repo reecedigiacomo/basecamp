@@ -18,13 +18,14 @@ An agentic engineering pattern. It starts by defining something that can be iter
    - **What to deliver:** The required behaviors, and how to verify each one.
    - **Where to stop:** Named non-goals, and the decisions reserved for me.
    - **Local decisions:** The goal and constraints that guide the decisions the agent is allowed to make on its own.
+   - **Size:** `small` or `standard`, which sets how heavy review is (see [Weight](#weight)). `/agent-brief` proposes one, and approving the brief confirms it. A brief without one counts as `standard`.
    Done with `/agent-brief`, in the same session as the grilling. It fills in the brief template, shows it to me, posts the issue only once I approve, then prints `/implementation-loop #N` for me to start in a fresh session.
 2. **Build loop** (`/implementation-loop <issue#>`): Runs on its own from the approved brief until it needs me. A thin **conductor** starts a fresh, named background session for each stage, every round: **implement → review**, repeated until review finds nothing left to fix.
    - **Implement session** (`<repo> #<issue> · implement · r<round>`): Writes the code, local to the brief. Its own checks stop at formatting and unit tests. In round 1 it opens a draft PR linked to the brief issue (`Closes #N`). In later rounds it works from the latest review: accepted findings, and any Human Decisions. **Output:** commits (following the [commit standard](../practices.md#commit-standard)) and an updated PR description.
    - **Review session** (`<repo> #<issue> · review · r<round>`): Runs `/pr-review <PR#>`. The session is **Adjudicate**.
      The steps are defined once, in [`/pr-review`](../skills/pr-review/SKILL.md). In short:
      1. **Orient:** refuse a PR from a fork before touching it (fork PRs are reviewed by hand), then find the brief (or note there's none), the round, earlier rulings and Nits lists, and the human's earlier answers, **without reading the diff**, so Adjudicate forms no opinion before the reviews arrive.
-     2. **Review:** three reviewer subagents run in parallel, each in a fresh context, each given only the fixed inputs. Adjudicate adds no framing of its own, and the reviewers post nothing.
+     2. **Review:** for a `small` brief or a fix round, Adjudicate reviews alone (see [Weight](#weight)). Otherwise, three reviewer subagents run in parallel, each in a fresh context, each given only the fixed inputs. Adjudicate adds no framing of its own, and the reviewers post nothing.
         - **Scope & Claims** (scope, claims, documentation): [persona file](../skills/pr-review/personas/scope-and-claims.md)
         - **Correctness & Safety** (correctness, security): [persona file](../skills/pr-review/personas/correctness-and-safety.md)
         - **Fit & Impact** (fit, impact, minimalist): [persona file](../skills/pr-review/personas/fit-and-impact.md)
@@ -51,6 +52,14 @@ Session (mine)   /implementation-loop #12        ← conductor
                    └─ "myapp #12 · review · r2"      → nothing accepted, Human Brief posted → "review r2: done"
                  conductor stops → "PR: <link>" / "ready to merge"
 ```
+
+### Weight
+
+The loop's weight fits the change, so a small change doesn't pay for a full review. [`/pr-review`](../skills/pr-review/SKILL.md) picks each round's weight in step 1; the conductor doesn't need to know it.
+
+- **`small` brief:** review is Adjudicate alone, with no reviewer subagents. It covers the same personas and still posts one `PR Review · round <n>` with the usual rulings table. Grilling, the brief, and the Human Brief work as for `standard`.
+- **Fix round,** at any size: when a review's accepted findings are all minor (after Adjudicate re-rates them) and nothing was escalated, its summary ends `Next round: fix`. Implementation fixes or defers just those findings, and the next review is Adjudicate alone, checking only those fixes against those findings. If one re-rates to major or worse, that round becomes a full one at the brief's size. A blocker or major always means a full next round. A fix round's result line reads `review r<n> (fix): ...`.
+- **Mis-sized brief:** if Implementation or Adjudicate judges that a `small` brief touches something riskier, Adjudicate asks me once, as a Human Decision: "re-size to standard?" No session re-sizes on its own. If I say yes, the brief's `Size:` line changes, and later rounds read it there.
 
 ### The conductor
 
