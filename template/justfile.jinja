@@ -32,6 +32,8 @@ check:
 {% raw -%}
 gdtoolkit := "gdtoolkit==4.5.0"
 gut_version := "9.7.1"
+# SHA-256 of the GUT release tarball. Update it with gut_version.
+gut_sha256 := "6da99c4e9228d9bec3fb4bd1730a487770a989f0f511dac82a2897a964613385"
 
 fmt:
     uvx --from {{ gdtoolkit }} gdformat .
@@ -45,27 +47,42 @@ test:
     #!/bin/sh
     set -eu
     want=$(cat .godot-version)
+    archive="https://godotengine.org/download/archive/$want-stable/"
     if ! command -v godot >/dev/null 2>&1; then
-      echo "just test: 'godot' is not on PATH. Install Godot $want (brew install --cask godot) or add it to PATH." >&2
+      echo "just test: 'godot' is not on PATH. Download Godot $want from $archive and add it to PATH." >&2
       exit 1
     fi
     have=$(godot --version)
     case $have in
       "$want".*) ;;
-      *) echo "just test: this project pins Godot $want (in .godot-version), but 'godot' is $have." >&2; exit 1 ;;
+      *)
+        echo "just test: this project pins Godot $want (in .godot-version), but 'godot' is $have." >&2
+        echo "Download Godot $want from $archive, or move the project to $have by updating .godot-version and .godot-linux-sha256." >&2
+        exit 1 ;;
     esac
+    work=$(mktemp -d)
+    trap 'rm -r -f "$work"' EXIT
     if ! grep -qs 'version="{{ gut_version }}"' addons/gut/plugin.cfg; then
       echo "Fetching GUT {{ gut_version }} into addons/gut/"
-      download=$(mktemp -d)
-      trap 'rm -r -f "$download"' EXIT
-      curl --proto '=https' --tlsv1.2 -fsSL "https://github.com/bitwes/Gut/archive/refs/tags/v{{ gut_version }}.tar.gz" \
-        | tar -xz -C "$download"
+      curl --proto '=https' --tlsv1.2 -fsSL -o "$work/gut.tar.gz" \
+        "https://github.com/bitwes/Gut/archive/refs/tags/v{{ gut_version }}.tar.gz"
+      echo "{{ gut_sha256 }}  $work/gut.tar.gz" | shasum -a 256 -c - >/dev/null 2>&1 \
+        || { echo "just test: the GUT download doesn't match gut_sha256." >&2; exit 1; }
+      tar -xzf "$work/gut.tar.gz" -C "$work"
       rm -r -f addons/gut
       mkdir -p addons
-      mv "$download/Gut-{{ gut_version }}/addons/gut" addons/gut
+      mv "$work/Gut-{{ gut_version }}/addons/gut" addons/gut
     fi
     godot --headless --import
-    godot --headless -s addons/gut/gut_cmdln.gd -gdir=res://test -ginclude_subdirs -gexit
+    status=0
+    godot --headless -s addons/gut/gut_cmdln.gd -gdir=res://test -ginclude_subdirs -gexit >"$work/gut.log" 2>&1 || status=$?
+    cat "$work/gut.log"
+    # GUT skips a test script that fails to parse (or whose dependencies do) and still passes.
+    if grep -q 'Failed to load script "res://test/' "$work/gut.log"; then
+      echo "just test: a test script failed to load. See the errors above." >&2
+      exit 1
+    fi
+    exit "$status"
 
 # Checks everything without changing anything.
 check:

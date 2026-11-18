@@ -85,6 +85,13 @@ cp "$godot_project/test/test_greeting.gd" "$work/test_greeting.gd"
 sed 's/Hello, Ada!/Goodbye, Ada!/' "$work/test_greeting.gd" > "$godot_project/test/test_greeting.gd"
 expect_failure "a failing GUT test" "1 failing tests" in_godot just check
 cp "$work/test_greeting.gd" "$godot_project/test/test_greeting.gd"
+printf 'extends GutTest\n\n\nfunc test_typo() -> void:\n\tassert_eq(undeclared_name, 1)\n' > "$godot_project/test/test_parse_error.gd"
+expect_failure "a GUT test script that fails to parse" "a test script failed to load" in_godot just check
+rm "$godot_project/test/test_parse_error.gd"
+printf 'static func broken() -> int:\n\treturn undeclared_name\n' > "$godot_project/src/broken.gd"
+printf 'extends GutTest\n\nconst Broken = preload("res://src/broken.gd")\n\n\nfunc test_one() -> void:\n\tassert_eq(1, 1)\n' > "$godot_project/test/test_broken_dependency.gd"
+expect_failure "a GUT test script whose dependency fails to parse" "a test script failed to load" in_godot just check
+rm "$godot_project/src/broken.gd" "$godot_project/test/test_broken_dependency.gd"
 # /usr/bin:/bin keeps sh and the basics but drops wherever godot was installed.
 if PATH=/usr/bin:/bin command -v godot >/dev/null 2>&1; then
   fail "godot is in /usr/bin or /bin, so the off-PATH check can't run"
