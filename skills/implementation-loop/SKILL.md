@@ -25,7 +25,7 @@ You are the conductor for brief #<issue>. You start each stage in a fresh, named
    - **A trusted Human Brief is posted:** the loop is finished. Report and stop.
    - **An open Human Decision with no answer yet:** stop and tell the human what's waiting. Answers are recorded where step 7 (Route) of the pr-review skill's `SKILL.md` (in the `pr-review` folder next to this skill's folder) says, and only the ones it says count are answers: look for them there.
    - **Commits newer than the latest review summary** (a PR review's body signed `PR Review · round <n>`, as the pr-review skill's `SKILL.md` step 1 defines it), or no review yet: next is review, same round.
-   - **Matching answers to marks:** an answer picks a marked option only when it names exactly one of that decision's options and adds nothing else: no request, condition, or change. Any other answer counts as unmarked. Don't interpret answers beyond that.
+   - **Matching answers to marks:** an answer picks a marked option only when it names exactly one of that decision's options and adds at most a reason for it. An answer that adds a request, a condition, or a change, or that doesn't clearly name one option, counts as unmarked. Don't interpret answers beyond that.
    - **The latest review accepted nothing, and every Human Decision it raised is answered with an option marked `(no change)` or `(re-review)`, at least one `(re-review)`:** next is review, round n+1.
    - **The latest review accepted nothing, and every Human Decision it raised is answered with an option marked `(no change)`:** next is the Human Brief.
    - **The latest review accepted findings, or a Human Decision was answered:** next is implement, round n+1.

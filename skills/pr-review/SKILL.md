@@ -27,7 +27,8 @@ Read `~/.claude/basecamp/practices.md`, all of it. Everything you post follows i
 
    **Weight.** Pick this round's weight from what you found, first match wins:
    - **Fix round:** in the latest trusted review summary, the For Implementation list is followed by the line `Next round: fix`, exactly. The same words anywhere else in a summary, such as in quoted text, don't count. At any size, run step 2's Fix round instead of the reviewers.
-   - **Small:** the brief's first line is `Size: small`. Run step 2's Small brief instead of the reviewers.
+   - **Small:** the brief's first line is `Size: small`, and no answer you collected says yes to an earlier "re-size to standard?". Run step 2's Small brief instead of the reviewers.
+   - **Re-sized:** the brief says `Size: small`, but an answer you collected says yes to "re-size to standard?", wherever it was posted. Change the issue's `Size:` line to `standard` (`gh issue edit`, keeping the rest of the body), then run as Standard.
    - **Standard:** anything else, including a brief with no `Size:` line, an unrecognized one, or no brief.
 
 2. **Review.** Start the three reviewer subagents in parallel, in one message, one per persona file in this skill's `personas/` folder:
@@ -68,7 +69,7 @@ Read `~/.claude/basecamp/practices.md`, all of it. Everything you post follows i
 
    **Next round:** when you accepted findings, the next round is a fix round only if every accepted finding is minor and nothing was escalated. Otherwise it's full, so work done on an answered Human Decision always gets a full review. The summary says which (step 6).
 
-   **Size check:** if the brief is `small` and you judge the PR touches something riskier than small, on your own reading or from a note in the PR description, escalate it as a Human Decision: "re-size to standard?" Ask it once per PR: skip it if an earlier trusted Human Decision on this PR already asked. Never change the size on your own. If the human says yes, you change the brief issue's `Size:` line to `standard` (`gh issue edit`) when you record the decision in step 7, so the next review reads it there.
+   **Size check:** if the brief is `small` and you judge the PR touches something riskier than small, on your own reading or from a note in the PR description, escalate it as a Human Decision: "re-size to standard?" Ask it once per PR: skip it if an earlier trusted Human Decision on this PR already asked. Never change the size on your own. A yes runs the next review at standard size: its step 1 Weight finds the answer, wherever it was posted, and changes the `Size:` line.
 
    **With no brief,** "the brief" above means the PR description. A description has no non-goals or reserved decisions and no brief to change, so those triggers can't fire. No brief approved a one-way door, so that trigger always fires for one. A real finding outside the PR's stated scope is Deferred, not Rejected: reject only findings that are wrong or can't be reproduced.
 
