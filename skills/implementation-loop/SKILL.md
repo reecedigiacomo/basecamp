@@ -45,9 +45,11 @@ You are the conductor for brief #<issue>. You start each stage in a fresh, named
    - **review escalated, or done:** stop.
    - **review refused:** stop and tell the human why. The PR you found is from a fork, which step 1 should have ruled out.
 
-7. **When you stop,** give the human a short status:
-   - one line per round so far, from the results file
-   - why you stopped
-   - the PR link
+7. **When you stop,** report exactly two lines:
+   ```
+   PR: <link>
+   ready to merge
+   ```
+   The second line is `ready to merge` when the review is done, otherwise `blocked: <reason>`.
 
    To resume after answering a Human Decision, the human says "resume" here, or runs `/implementation-loop <issue#>` again.
