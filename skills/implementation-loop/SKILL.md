@@ -25,6 +25,9 @@ You are the conductor for brief #<issue>. You start each stage in a fresh, named
    - **A trusted Human Brief is posted:** the loop is finished. Report and stop.
    - **An open Human Decision with no answer yet:** stop and tell the human what's waiting. Answers are recorded where step 7 (Route) of the pr-review skill's `SKILL.md` (in the `pr-review` folder next to this skill's folder) says, and only the ones it says count are answers: look for them there.
    - **Commits newer than the latest review summary** (a PR review's body signed `PR Review · round <n>`, as the pr-review skill's `SKILL.md` step 1 defines it), or no review yet: next is review, same round.
+   - **Matching answers to marks:** an answer picks a marked option only when it names exactly one of that decision's options and adds at most a reason for it. An answer that adds a request, a condition, or a change, or that doesn't clearly name one option, counts as unmarked. Don't interpret answers beyond that.
+   - **The latest review accepted nothing, and every Human Decision it raised is answered with an option marked `(no change)` or `(re-review)`, at least one `(re-review)`:** next is review, round n+1.
+   - **The latest review accepted nothing, and every Human Decision it raised is answered with an option marked `(no change)`:** next is the Human Brief.
    - **The latest review accepted findings, or a Human Decision was answered:** next is implement, round n+1.
 
 2. **Prepare the worktree.** Make sure `.claude/worktrees/<issue#>` exists on branch `brief/<issue#>-<slug>`, created from `main` if it doesn't. Every stage session runs there.
@@ -32,6 +35,7 @@ You are the conductor for brief #<issue>. You start each stage in a fresh, named
 3. **Start the stage** as a background session in the worktree, in `auto` permission mode, named `<repo> #<issue#> · <stage> · r<round>`:
    - **implement:** tell it to read and follow `implement.md` from this skill's own folder (give it the full path) for issue #<issue#>, round <round>, reporting to the results file.
    - **review:** `/pr-review <PR#> --report-to <results file>`.
+   - **human-brief:** tell it to read and follow `human-brief.md` from the pr-review skill's folder (give it the full path) for PR #<PR#> and brief #<issue#>, with the worktree as its checkout once it's at the PR's head commit, then append `human-brief: posted · PR #<PR#>` to the results file.
 
 4. **Wait for its line in the results file.** While waiting, check the session's state in `claude agents --json`. If it shows it's waiting for input, tell the human:
    > Session `<name>` is waiting for you: run `claude attach <name>`.
@@ -43,6 +47,7 @@ You are the conductor for brief #<issue>. You start each stage in a fresh, named
    - **implement blocked:** stop. The human is needed.
    - **review accepted findings:** start implement, next round.
    - **review escalated, or done:** stop.
+   - **human-brief posted:** stop.
    - **review refused:** stop and tell the human why. The PR you found is from a fork, which step 1 should have ruled out.
 
 7. **When you stop,** report exactly two lines:
@@ -50,6 +55,6 @@ You are the conductor for brief #<issue>. You start each stage in a fresh, named
    PR: <link>
    ready to merge
    ```
-   The first line is `PR: none` if implement blocked before opening one. The second line is `ready to merge` when the review is done, otherwise `blocked: <reason>`.
+   The first line is `PR: none` if implement blocked before opening one. The second line is `ready to merge` when the review is done or the Human Brief is posted, otherwise `blocked: <reason>`.
 
    To resume after answering a Human Decision, the human says "resume" here, or runs `/implementation-loop <issue#>` again.

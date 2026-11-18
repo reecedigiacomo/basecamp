@@ -24,7 +24,7 @@ A piece of work goes through the loop like this:
                              → a Human Brief on the PR: what only the human can decide
 ```
 
-Review is done by three independent reviewers (Scope & Claims, Correctness & Safety, Fit & Impact), and every finding except a nit is checked and ruled on before anything goes back for fixing. Hard-to-undo decisions always come back to the human.
+Review is done by three independent reviewers (Scope & Claims, Correctness & Safety, Fit & Impact). A brief sized `small`, or a round that only fixes minor findings, is reviewed by the adjudicator alone. Every finding except a nit is checked and ruled on before anything goes back for fixing. Hard-to-undo decisions always come back to the human.
 
 Full details: [docs/implementation-loop.md](docs/implementation-loop.md).
 

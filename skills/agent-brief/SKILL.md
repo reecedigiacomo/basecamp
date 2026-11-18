@@ -22,8 +22,9 @@ Turn the shared understanding from this session's grilling into an Agent Brief: 
    - **Local decisions:** the goal and constraints the agent decides within.
    - **Performance:** only if the grilling made performance a requirement. Otherwise leave the section out.
    - **Title:** a short, plain statement of the outcome.
+   - **Size:** propose `small` or `standard`, per the Agent Brief section, with one line on why. When unsure, propose `standard`.
 2. **Find the gaps.** If anything the brief needs wasn't settled in the grilling, ask the human now. Don't fill it in yourself.
-3. **Show the full draft** to the human. Revise until they explicitly approve it.
+3. **Show the full draft** to the human, with the proposed size and why. Revise until they explicitly approve it. Approving the brief confirms its size.
 4. **Post it** only after approval: write the body to a temp file, then run `gh issue create --title "<title>" --body-file <file>`.
 5. **Hand off.** Print the issue link and the next step:
    > Start the build loop in a fresh session: `/implementation-loop #<N>`

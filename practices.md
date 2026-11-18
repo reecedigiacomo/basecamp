@@ -154,6 +154,8 @@ The contract for a piece of work: say what done looks like, then get out of the 
 ### Layout
 
 ```markdown
+Size: small | standard
+
 ## Context
 
 ## What to deliver
@@ -165,6 +167,7 @@ The contract for a piece of work: say what done looks like, then get out of the 
 ## Performance
 ```
 
+- **Size:** the brief's first line, `Size: small` or `Size: standard`. It sets how heavy the review is (the pr-review skill says how). `small` fits a change that's low-risk and easy to revert. A brief without a size counts as `standard`. Only the human sets or changes it.
 - **Context:** why this work exists, with links. Short.
 - **What to deliver:** each required behavior, and how to verify it. List behaviors, not test cases or edge cases the human didn't raise. Which tests to write is the implementer's call.
 - **Where to stop:** non-goals, and the decisions reserved for the human.

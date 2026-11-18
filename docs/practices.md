@@ -7,7 +7,7 @@ The standard conventions every project follows. The rules themselves live in [`p
 - **[Local checks](../practices.md#local-checks):** The same four `just` commands in every language mean I, the agents, and CI all run the same thing. The pre-commit hook makes "each commit passes local standards" automatic instead of something agents have to remember.
 - **[Shortcuts](../practices.md#shortcuts):** Marking a deliberate shortcut turns "good enough for now" into a visible decision, so reviewers don't keep flagging it and I can see every known limit. `grep -r "shortcut:"` lists a project's shortcuts for retrospectives.
 - **[Comments and names](../practices.md#comments-and-names):** Comments that explain why, and names that say what, keep code readable for the next person or agent.
-- **[Agent Brief](../practices.md#agent-brief):** Briefs are GitHub issues so their edit history records every change after a Human Decision, and `Closes #N` links each PR back to its brief. A brief stays as small as its task because the implementer builds what it lists: a brief that lists edge cases gets a test for each.
+- **[Agent Brief](../practices.md#agent-brief):** Briefs are GitHub issues so their edit history records every change after a Human Decision, and `Closes #N` links each PR back to its brief. A brief stays as small as its task because the implementer builds what it lists: a brief that lists edge cases gets a test for each. Its size does the same for review: a `small` brief gets a lighter review, and only I set it, since it decides how much checking a change gets.
 
 ## PR format
 
