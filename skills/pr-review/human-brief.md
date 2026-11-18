@@ -6,7 +6,7 @@ You weren't part of the review. Work only from the record. Don't take anything t
 
 ## Inputs
 
-The repo (its GitHub owner/name and a local checkout at the PR's head commit), the PR number, and the Agent Brief issue number (with no brief, the PR description is the stand-in contract; say so in The ask). From those, read the record: the brief, the PR (description, diff, CI results), and its review threads, rulings, and Human Decisions, plus the permission lookup that `SKILL.md`'s Trusted posts section uses to check who posted them. Nothing else.
+The repo (its GitHub owner/name and a local checkout at the PR's head commit), the PR number, and the Agent Brief issue number (with no brief, the PR description is the stand-in contract; say so in The ask). From those, read the record: the brief, the PR (description, diff, CI results), and its review threads, rulings, and Human Decisions, plus the permission lookup that `SKILL.md`'s Trusted posts section uses to check whether they count. Nothing else.
 
 ## Layout
 
