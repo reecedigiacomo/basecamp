@@ -81,6 +81,11 @@ github_owner:
     Give the GitHub user or organization that owns the BaseCamp repo, such as octocat.
     {% endif %}
 
+lfs:
+  type: bool
+  help: Track large assets with Git LFS?
+  default: false
+
 # Derived, never asked or recorded.
 package_name:
   type: str

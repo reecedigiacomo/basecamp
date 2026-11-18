@@ -10,7 +10,7 @@ From nothing to a repo ready for the Implementation Loop. The GitHub settings ar
   uvx copier copy gh:<owner>/basecamp my-project
   ```
 
-  It asks for the project's name, a one-line description, its language (Python, Rust or Godot), and the GitHub owner whose BaseCamp repo hosts the CI workflow. To pick up later template changes, the project's README says how to run `uvx copier update`.
+  It asks for the project's name, a one-line description, its language (Python, Rust or Godot), the GitHub owner whose BaseCamp repo hosts the CI workflow, and whether to track large assets with Git LFS. To pick up later template changes, the project's README says how to run `uvx copier update`.
 
 ## 2. Create the GitHub repo and push
 

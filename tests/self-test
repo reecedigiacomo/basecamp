@@ -25,13 +25,14 @@ fail() {
   failures=$((failures + 1))
 }
 
-generate() { # generate <language> <dest> [project_name]
+generate() { # generate <language> <dest> [project_name] [lfs]
   # --vcs-ref=HEAD makes Copier include uncommitted changes in the working tree.
   uvx copier copy --quiet --trust --defaults --vcs-ref=HEAD \
     --data "project_name=${3:-sample-parser}" \
     --data "description=A sample parser" \
     --data "language=$1" \
     --data github_owner=octocat \
+    --data "lfs=${4:-false}" \
     "$repo" "$2"
 }
 
@@ -90,6 +91,15 @@ if PATH=/usr/bin:/bin command -v godot >/dev/null 2>&1; then
 else
   expect_failure "just test without godot on PATH" "'godot' is not on PATH" \
     env PATH=/usr/bin:/bin "$(command -v just)" --justfile "$godot_project/justfile" test
+fi
+
+echo "== Git LFS question"
+[ -e "$work/python/.gitattributes" ] && fail "lfs=false wrote .gitattributes"
+generate python "$work/lfs" sample-parser true
+if grep -q 'filter=lfs' "$work/lfs/.gitattributes" 2>/dev/null; then
+  echo "ok   lfs=true writes .gitattributes"
+else
+  fail "lfs=true wrote no .gitattributes with LFS patterns"
 fi
 
 echo "== project names that would break the project"
