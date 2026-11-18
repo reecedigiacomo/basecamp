@@ -13,8 +13,4 @@ indent_size = 2
 
 [justfile]
 indent_size = 4
-{% if language == 'godot' %}
-# gdformat indents GDScript with tabs.
-[*.gd]
-indent_style = tab
-{% endif -%}
+{% include 'languages/' ~ language ~ '/editorconfig' ignore missing -%}

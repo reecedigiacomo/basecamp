@@ -1,0 +1,4 @@
+
+# gdformat indents GDScript with tabs.
+[*.gd]
+indent_style = tab

@@ -1,0 +1,4 @@
+{# Refuses a name the crate couldn't build under. #}
+{% if project_name | replace('-', '_') == 'std' %}
+'std' is Rust's standard library, so the crate wouldn't build. Pick another name.
+{% endif %}
