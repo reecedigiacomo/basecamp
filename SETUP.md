@@ -14,7 +14,7 @@ From nothing to a repo ready for the Implementation Loop. The GitHub settings ar
 
 ## 2. Create the GitHub repo and push
 
-Pick the repo's visibility first: step 4 needs a public repo or a paid plan (on a free personal account or a Free organization, a private repo doesn't enforce rulesets), and step 6 applies only to a public repo.
+Pick the repo's visibility first: step 5 needs a public repo or a paid plan (on a free personal account or a Free organization, a private repo doesn't enforce rulesets), and step 6 applies only to a public repo.
 
 - [ ] On GitHub, create an empty repo (no README, license, or `.gitignore`), named after the project.
 - [ ] Copier doesn't make a git repo, so make one, commit, and push to `main`, using the repo's URL:
@@ -31,8 +31,18 @@ Pick the repo's visibility first: step 4 needs a public repo or a paid plan (on 
 ## 3. Get started locally
 
 - [ ] Do the "Getting started" section of the project's README ([template](template/README.md.jinja)).
+- [ ] Run `just check` once. It creates the lock file (`uv.lock` for Python, `Cargo.lock` for Rust). Commit it and push: lock files are always committed, never ignored.
 
-## 4. Protect the default branch
+## 4. General settings
+
+In **Settings → General → Pull Requests**:
+
+- [ ] **Allow merge commits:** off.
+- [ ] **Allow squash merging:** on, with default message **Pull request title and description**.
+- [ ] **Allow rebase merging:** off.
+- [ ] **Automatically delete head branches:** on.
+
+## 5. Protect the default branch
 
 In **Settings → Rules → Rulesets → New ruleset → New branch ruleset**:
 
@@ -47,19 +57,12 @@ In **Settings → Rules → Rulesets → New ruleset → New branch ruleset**:
   - [ ] **Allowed merge methods:** Squash only
 - [ ] Create the ruleset.
 
-The required check only shows up in the picker after CI has run once, so add it after a first PR:
+The required check only shows up in the picker after CI has run once on a PR, so add it with a throwaway PR:
 
-- [ ] Open a first PR and wait for CI to finish.
-- [ ] Edit the ruleset: **Require status checks to pass** on, then add `check / check`.
-
-## 5. General settings
-
-In **Settings → General → Pull Requests**:
-
-- [ ] **Allow merge commits:** off.
-- [ ] **Allow squash merging:** on, with default message **Pull request title and description**.
-- [ ] **Allow rebase merging:** off.
-- [ ] **Automatically delete head branches:** on.
+- [ ] Make a small change on a branch, push it, and open a PR.
+- [ ] Wait for CI (`check / check`) to finish.
+- [ ] Edit the `protect-main` ruleset: turn on **Require status checks to pass**, then add `check / check`.
+- [ ] Close the PR without merging.
 
 ## 6. Security
 
