@@ -115,11 +115,11 @@ else
   fail "lfs=true wrote no .gitattributes with LFS patterns"
 fi
 
-echo "== project names every language refuses"
-for language in $languages; do
-  refuse "$language" 1-starts-with-a-digit
-  refuse "$language" ends-with-
-done
+echo "== project names the core validator refuses"
+# These fail the core check in copier.yml before any name-check.jinja runs, so one
+# language covers them. Each language's own self-test checks its name-check.jinja.
+refuse "$first_language" 1-starts-with-a-digit
+refuse "$first_language" ends-with-
 
 if [ "$failures" -gt 0 ]; then
   echo "self-test: $failures failure(s)" >&2
