@@ -50,6 +50,6 @@ You are the conductor for brief #<issue>. You start each stage in a fresh, named
    PR: <link>
    ready to merge
    ```
-   The second line is `ready to merge` when the review is done, otherwise `blocked: <reason>`.
+   The first line is `PR: none` if implement blocked before opening one. The second line is `ready to merge` when the review is done, otherwise `blocked: <reason>`.
 
    To resume after answering a Human Decision, the human says "resume" here, or runs `/implementation-loop <issue#>` again.
