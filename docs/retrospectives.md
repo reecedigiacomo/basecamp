@@ -22,7 +22,7 @@ The conductor's results file is temporary and isn't a source.
 - **Code health:** Coupling (files that change together), hotspots (files we keep going back to).
 - **Process cost:** Tokens from Agent Brief to Human Brief, iterations per brief, interventions per brief, my time per brief.
 - **Review quality:** Acceptance rate per reviewer, rejection reasons, corroboration rate (findings raised by two or more reviewers, and how often those get accepted), and escaped bugs (issues labeled `escaped`, linked to the PR that introduced them).
-- **Loop health:** Tripwire and round-limit hits, escalations by trigger, changes to the brief mid-loop, deferred follow-ups.
+- **Loop health:** Tripwire, round-limit, and mechanism-count hits, Fixed by Adjudicate counts, escalations by trigger, changes to the brief mid-loop, deferred follow-ups.
 - **Easier vs. harder:** What each change made easier and what it made harder.
 
 ## On hold
